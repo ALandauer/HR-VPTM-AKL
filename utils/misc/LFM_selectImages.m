@@ -4,15 +4,14 @@
 % Upated for image sequence processing for LFM2PT, AKL 03/2021
 %
 
-function [LensletImageSeq, image_name, WhiteImage, configFile] = LFM_selectImages(folder,dataset)
+function [LensletImageSeq, image_names, WhiteImage, configFile] = LFM_selectImages(folder,subfolder)
 
 % Choose the raw images to reconstruct and correponding white image (to identify the mlens centers)
-subfolder = dataset;
 files = dir(fullfile(folder, subfolder, '*.tif'));
 
 cnt = 1;
 for ii = 1:length(files)
-    if ~strcmp(files.name,'WhiteImage')
+    if ~strcmp(files(ii).name,'WhiteImage')
         LensletImageSeq{cnt} = imread(fullfile(files(ii).folder,files(ii).name));
         image_names{cnt} = fullfile(files(ii).folder,files(ii).name);
         cnt = cnt + 1;

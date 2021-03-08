@@ -13,12 +13,14 @@
 %       [Jin's Trial-MPT paper]
 %
 
+clear all,close all
+
 %% Add dependecy dirs to path
 import2ws();
 
 
 %% Specify data to import
-data_folder = ['.',filesep,'data']; %main data directory
+data_folder = ['.',filesep,'data',filesep]; %main data directory
 dataset = 'dx_exp'; %subfolder for a specific experiment
 
 %% ======================= SET-UP SECTION ============================
@@ -39,7 +41,7 @@ superResFactor = 'default'; % default means sensor resolution
 
 %problem dimensions setup
 MPTPara.DIM = 3;
-MPTPara.axesScale = [1,1,depthStep]; % unit: um/px
+MPTPara.axesScale = [1.64,1.64,depthStep]; % unit: um/px
 MPTPara.depthRange = depthRange; % unit: um/px
 MPTPara.tstep = 1; % unit: us
 
@@ -54,7 +56,7 @@ im_roi_mask_file_path = '';
 %%  ======================= oLaF SECTION ============================
 
 % get lenslet images for recon
-[LensletImageSeq, imageNames, WhiteImage, configFile] = LFM_selectImages(dataset);
+[LensletImageSeq, imageNames, WhiteImage, configFile] = LFM_selectImages(data_folder,dataset);
 
 figure; imagesc(LensletImageSeq{1}); colormap inferno; title ('LF image #1'); drawnow
 
