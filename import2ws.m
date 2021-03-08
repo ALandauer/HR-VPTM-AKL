@@ -12,7 +12,7 @@ addpath('functions/');
 
 %Trial-MPT specific
 addpath('utils/external/Scatter2Grid3D/');
-addpath('utils/external/MPT_src/');
+addpath('utils/MPT_src/');
 
 %oLaF specific
 addpath('functions/projectionOperators/');
