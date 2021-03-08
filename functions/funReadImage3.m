@@ -93,42 +93,6 @@ fileInfo.filename = {filename.name};
 
 if isempty(fileInfo), error('File name doesn''t exist'); end
 
-% % Ensure dimensionality of the subset size
-% sSize = varargin{2};
-% if numel(sSize) == 1
-%     sSize = sSize*[1 1 1];
-% elseif numel(sSize) ~=3
-%     error('Subset size must be a scalar or a three column array');
-% end
-% 
-% %get minium subset size
-% sSizeMin = varargin{3};
-%                   
-% % Ensure range of subset size
-% if min(sSize) < 16 || max(sSize > 128)
-%    error('Subset size must be within 16 and 128 pixels');
-% end
-% 
-% % Ensure even subset size
-% % if sum(mod(sSize,4)) > 0
-% %     error('Subset size must be even');
-% % end
-% 
-% if sum(mod(sSize,32)) ~= 0
-%     error('Subset size must be 16, 32, 64, 96, or 128 voxels in each dimension');
-% end
-
-% Check run method input
-% runMode = 'c';
-% runMode  = varargin{4};
-
-% if ~(strcmpi(runMode(1),'c') || strcmpi(runMode(1),'i') || strcmpi(runMode(1),'h'))
-%     error('Run method must be incremental or cumulative or hybrid');
-% end
-% 
-% % Initial guess of displacement field = [0 0 0];
-% u0 = num2cell(zeros(1,3));
-
 % Outputs
 varargout{      1} = fileInfo;
 % varargout{end + 1} = sSize;

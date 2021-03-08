@@ -1,5 +1,5 @@
 function [parCoordB,uvw_B2A_refB,resultDisp,resultDefGrad,track_A2B,track_B2A] = fun_TrialMPT_3D_HardPar(...
-    ImgSeqNum,ImgDef,BeadPara,MPTPara,parCoordA,parCoordB_prev,uvw_B2A_refB_prev)
+    ImgSeqNum,ImgDef,BeadPara,beadParam_all,MPTPara,parCoordA,parCoordB_prev,uvw_B2A_refB_prev)
  
 
 warning('off');
@@ -15,7 +15,7 @@ currImg = ImgDef(MPTPara.gridxyzROIRange.gridx(1):MPTPara.gridxyzROIRange.gridx(
                  MPTPara.gridxyzROIRange.gridz(1):MPTPara.gridxyzROIRange.gridz(2));
 
 %%%%% If PSF is non-empty, perform deconvolution %%%%%
-if ~isempty(BeadPara.PSF)
+if ~isempty(BeadPara.PSF) && BeadPara.detectionMethod ~= 3
     currImg = deconvlucy(currImg,BeadPara.PSF,6);
     disp('----- Deconvolution frame #',num2str(ImgSeqNum),' ------');
 end
@@ -31,31 +31,63 @@ end
 try 
     BeadPara.detectionMethod = BeadPara.detectionMethod;
 catch
-    BeadPara.detectionMethod = 2;
+    BeadPara.detectionMethod = 3;
 end
 %%%%% Method 1: TPT code %%%%%
-if BeadPara.detectionMethod == 1 
-    x{1}{ImgSeqNum} = locateParticles(double(currImg2)/max(double(currImg2(:))),BeadPara); % Detect particles
-    x{1}{ImgSeqNum} = radialcenter3dvec(double(currImg2),x{1}{ImgSeqNum},BeadPara); % Localize particles
+if BeadPara.detectionMethod == 1
+    beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    x{1}{ImgSeqNum} = locateParticles(double(currImg2)/max(double(currImg2(:))),beadParam_all{ImgSeqNum}); % Detect particles
+    x{1}{ImgSeqNum} = radialcenter3dvec(double(currImg2),x{1}{ImgSeqNum},beadParam_all{ImgSeqNum}); % Localize particles
+    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axes_scale; %convert to um units
 % ----------------------------
 %%%%% Method 2: Modified TracTrac code %%%%%
 elseif BeadPara.detectionMethod == 2
-    x{1}{ImgSeqNum} = f_detect_particles3(double(currImg2)/max(double(currImg2(:))),BeadPara);
-% x{1}{ImgSeqNum} = radialcenter3dvec(double(currImg2),x{1}{ImgSeqNum},BeadPara); % Localize particles
+    beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    x{1}{ImgSeqNum} = f_detect_particles3(double(currImg2)/max(double(currImg2(:))),beadParam_all{ImgSeqNum});
+    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axes_scale; %convert to um units
+
+%%%%% Method 3: Deconv + Active contour code, better for large beads that need bespoke deconv %%%%%
+elseif BeadPara.detectionMethod == 3
+    
+    %method specific beadPara entries
+    BeadPara.deconvThresh = 0.05;
+    BeadPara.deconvPrefilter = true; %true/false gaussian prefilter option
+    BeadPara.deconvIter = 5;
+    BeadPara.psfSize = [40,40]; %x,y size of bead-based psf
+    BeadPara.winSize = [15, 15, 15];
+    BeadPara.ratThresh = 0.20;
+    BeadPara.circThresh = 1.0;
+    BeadPara.smoothFac = 0.15;
+    beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    if ImgSeqNum > 1
+        beadParam_all{ImgSeqNum}.minSize = beadParam_all{1}.minSize;
+        beadParam_all{ImgSeqNum}.maxSize = beadParam_all{1}.maxSize;
+    end
+    
+    vol_in = double(currImg2)/max(double(currImg2(:)));
+    
+    %run preprocessing to get PSF and deconvolve
+    [vol_in,beadParam_all{ImgSeqNum}] = funPreprocLocalizeAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
+    %find interger centriods
+    [x{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
+    %Use radial center-finding from TPT to get subpixel estimates based on the integer centroid locations
+    x{1}{ImgSeqNum} = radialcenter3dvec(double(currImg2),x{1}{ImgSeqNum},beadParam_all{ImgSeqNum});
+    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axes_scale; %convert to um units
+    
 end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 % Add MPTPara.gridxyzROIRange left-bottom corner point coordinates
-x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + [MPTPara.gridxyzROIRange.gridx(1)-1, ...
-                                     MPTPara.gridxyzROIRange.gridy(1)-1, ...
-                                     MPTPara.gridxyzROIRange.gridz(1)-1];
+x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + [MPTPara.gridxyzROIRange.gridx(1)+MPTPara.xRange(1)-1*MPTPara.axes_scale(1), ...
+                                     MPTPara.gridxyzROIRange.gridy(1)+MPTPara.yRange(1)-1*MPTPara.axes_scale(2), ...
+                                     MPTPara.gridxyzROIRange.gridz(1)+MPTPara.depthRange(1)-1*MPTPara.axes_scale(3)];
 parCoordB = x{1}{ImgSeqNum};
 
 % Remove bad coordinates that are out of image ROI
-for tempi=1:3, parCoordB( parCoordB(:,tempi)>size(ImgDef,tempi), : ) = []; end
-for tempi=1:3, parCoordB( parCoordB(:,tempi)<1, : ) = []; end
-
+for tempi=1:3, parCoordB( parCoordB(:,tempi) > size(ImgDef,tempi)*MPTPara.axes_scale(tempi), : ) = []; end
+for tempi=1:3, parCoordB( parCoordB(:,tempi) < 1*MPTPara.axes_scale(tempi), : ) = []; end
 
 %%%%% Plot detected particles %%%%%
 % close all;
