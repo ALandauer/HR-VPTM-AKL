@@ -21,7 +21,8 @@ WhiteImage = imread([folder, subfolder,  '\WhiteImage.tif']);
 configFile = [folder, subfolder,  '\LFMconfig.yaml'];
 
 %show figure for cropping
-[LensletImageSeq{ii},rect] = imcrop(LensletImageSeq{ii});
+[~,rect] = imcrop(LensletImageSeq{ii}+WhiteImage/4);
+[LensletImageSeq{ii}] = imcrop(LensletImageSeq{ii},rect);
 
 % crop files to ROI before reconstructing for speed up
 if length(length(LensletImageSeq))>1
@@ -30,3 +31,5 @@ if length(length(LensletImageSeq))>1
     end
 end
 WhiteImage = imcrop(WhiteImage, rect);
+
+close(gcf)

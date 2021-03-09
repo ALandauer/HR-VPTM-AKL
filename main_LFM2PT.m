@@ -21,14 +21,14 @@ import2ws();
 
 %% Specify data to import
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-dataset = 'dx_exp'; %subfolder for a specific experiment
+dataset = 'exp_ruler'; %subfolder for a specific experiment
 
 %% ======================= SET-UP SECTION ============================
 
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-400, 400];
+depthRange = [-200, 200];
 % axial slice step (in um)
 depthStep = 5;
 
@@ -79,8 +79,8 @@ for ii = 1:length(LensletImageSeq)
     correctedLensletImageSeq{ii}(correctedLensletImageSeq{ii} < mean(correctedLensletImageSeq{ii}(:))) = mean(correctedLensletImageSeq{ii}(:));
     correctedLensletImageSeq{ii} = mat2gray(single(correctedLensletImageSeq{ii}));
 end
-% Reconstruct
 
+% Reconstruct
 for ii = 1:length(LensletImageSeq)
     % precompute image/volume sizes
     imgSize = size(correctedLensletImageSeq{ii});
@@ -130,7 +130,7 @@ for ii = 1:length(LensletImageSeq)
         
         
         %verify with user if the recon is okay
-        prompt = 'Continue deconvolving the remainder of the sequence? Y/N [Y]: ';
+        prompt = '\nContinue deconvolving the remainder of the sequence? Y/N [Y]: ';
         yn = input(prompt,'s');
         if isempty(yn)
             yn = 'Y';

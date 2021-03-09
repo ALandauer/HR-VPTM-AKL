@@ -9,6 +9,8 @@ function import2ws()
 
 
 addpath('functions/');
+addpath('utils/');
+addpath('utils/external/');
 
 %Trial-MPT specific
 addpath('utils/external/Scatter2Grid3D/');
@@ -17,6 +19,7 @@ addpath('utils/MPT_src/');
 %oLaF specific
 addpath('functions/projectionOperators/');
 addpath('functions/LFPSF/');
+addpath('functions/solvers/');
 addpath('functions/LFPSF/MLATransmittance/');
 addpath('utils/CameraGeometry/');
 addpath('utils/ImageRectification/');
