@@ -21,14 +21,14 @@ import2ws();
 
 %% Specify data to import
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-dataset = 'exp_ruler'; %subfolder for a specific experiment
+dataset = 'dx_singleLayer_5um'; %subfolder for a specific experiment
 
 %% ======================= SET-UP SECTION ============================
 
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-200, 200];
+depthRange = [-250, 250];
 % axial slice step (in um)
 depthStep = 5;
 
@@ -45,7 +45,7 @@ MPTPara.axesScale = [1.64,1.64,depthStep]; % unit: um/px
 MPTPara.depthRange = depthRange; % unit: um/px
 MPTPara.tstep = 1; % unit: us
 
-MPTPara.mode = 'inc'; % {'inc': incremental mode; 'cum': cumulative mode}
+MPTPara.mode = 'cum'; % {'inc': incremental mode; 'cum': cumulative mode}
 MPTPara.parType = 'hard'; % {'hard': hard particle; 'soft': soft particle}
 
 % Bead detection method
@@ -120,30 +120,31 @@ for ii = 1:length(LensletImageSeq)
     reconVolume = deconvEMS(forwardFUN, backwardFUN, LFimage, it, initVolume, 1, lanczos2FFT, onesForward, onesBack);
     
     % Display the first reconstruction
-    if ii == 1
-        figure;
-        if(size(reconVolume, 3) > 1)
-            imshow3D(reconVolume, [], 'inferno');
-        else
-            imagesc(reconVolume); colormap inferno
-        end
-        
-        
-        %verify with user if the recon is okay
-        prompt = '\nContinue deconvolving the remainder of the sequence? Y/N [Y]: ';
-        yn = input(prompt,'s');
-        if isempty(yn)
-            yn = 'Y';
-        end
-        if yn == 'y' || yn == 'Y'
-            disp('Onward!')
-        else
-            error('Deconv not accepted...')
-        end
-    end
+% %     if ii == 1
+% %         figure;
+% %         if(size(reconVolume, 3) > 1)
+% %             imshow3D(reconVolume, [], 'inferno');
+% %         else
+% %             imagesc3D(reconVolume); colormap inferno
+% %         end
+% %         
+% %         
+% %         %verify with user if the recon is okay
+% %         prompt = '\nContinue deconvolving the remainder of the sequence? Y/N [Y]: ';
+% %         yn = input(prompt,'s');
+% %         if isempty(yn)
+% %             yn = 'Y';
+% %         end
+% %         if strcmpi(yn,'y')
+% %             disp('Onward!')
+% %         else
+% %             error('Deconv not accepted...')
+% %         end
+% %     end
     
     filename_cur = [imageNames{ii}(1:end-4),'.mat'];
     
+    LensletImage = LensletImageSeq{ii};
     %save out the recon'd image
     save(filename_cur,'reconVolume','LensletImage')
     
@@ -209,18 +210,18 @@ maxGapTrajSeqLength = 0; % the max frame# gap between connected trajectory segme
 
 
 %%%%% Run Trial-MPT tracking %%%%%
-if strcmp(MPTPara.mode,'inc')
-    if strcpm(MPTPara.parType,'hard')
+if strcmpi(MPTPara.mode,'inc')
+    if strcpmi(MPTPara.parType,'hard')
         run_Trial_MPT_3D_hardpar_inc;
-    elseif strcpm(MPTPara.parType,'soft')
+    elseif strcpmi(MPTPara.parType,'soft')
         disp('not yet implemented');
     else
         disp('Please enter a valid particle type')
     end
-elseif strcmp(MPTPara.mode,'cum')
-    if strcpm(MPTPara.parType,'hard')
+elseif strcmpi(MPTPara.mode,'cum')
+    if strcpmi(MPTPara.parType,'hard')
         run_Trial_MPT_3D_hardpar_cum;
-    elseif strcpm(MPTPara.parType,'soft')
+    elseif strcpmi(MPTPara.parType,'soft')
         disp('not yet implemented');
     else
         disp('Please enter a valid particle type')

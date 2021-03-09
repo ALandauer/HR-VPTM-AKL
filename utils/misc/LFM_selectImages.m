@@ -11,7 +11,7 @@ files = dir(fullfile(folder, subfolder, '*.tif'));
 
 cnt = 1;
 for ii = 1:length(files)
-    if ~strcmp(files(ii).name,'WhiteImage')
+    if ~strcmpi(files(ii).name,'WhiteImage.tif')
         LensletImageSeq{cnt} = imread(fullfile(files(ii).folder,files(ii).name));
         image_names{cnt} = fullfile(files(ii).folder,files(ii).name);
         cnt = cnt + 1;
@@ -21,8 +21,8 @@ WhiteImage = imread([folder, subfolder,  '\WhiteImage.tif']);
 configFile = [folder, subfolder,  '\LFMconfig.yaml'];
 
 %show figure for cropping
-[~,rect] = imcrop(LensletImageSeq{ii}+WhiteImage/4);
-[LensletImageSeq{ii}] = imcrop(LensletImageSeq{ii},rect);
+[~,rect] = imcrop(LensletImageSeq{1}+WhiteImage/4);
+[LensletImageSeq{1}] = imcrop(LensletImageSeq{1},rect);
 
 % crop files to ROI before reconstructing for speed up
 if length(length(LensletImageSeq))>1
