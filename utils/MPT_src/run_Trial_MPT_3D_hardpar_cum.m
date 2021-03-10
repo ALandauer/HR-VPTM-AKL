@@ -127,14 +127,19 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% Store particle positions as "parCoordA" %%%%%
-x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + [MPTPara.gridxyzROIRange.gridx(1)+MPTPara.xRange(1)-1*MPTPara.axesScale(1), ...
-                                     MPTPara.gridxyzROIRange.gridy(1)+MPTPara.yRange(1)-1*MPTPara.axesScale(2), ...
-                                     MPTPara.gridxyzROIRange.gridz(1)+MPTPara.depthRange(1)-1*MPTPara.axesScale(3)];
+x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + ...
+    [MPTPara.gridxyzROIRange.gridx(1)*MPTPara.axesScale(1)+MPTPara.xRange(1)-1*MPTPara.axesScale(1), ...
+    MPTPara.gridxyzROIRange.gridy(1)*MPTPara.axesScale(2)+MPTPara.yRange(1)-1*MPTPara.axesScale(2), ...
+    MPTPara.gridxyzROIRange.gridz(1)*MPTPara.axesScale(3)+MPTPara.depthRange(1)-1*MPTPara.axesScale(3)];
 parCoordA = x{1}{ImgSeqNum};
 
-%%%%% Remove bad parCoord outside the image area %%%%%
-for tempi=1:3, parCoordA( parCoordA(:,tempi) > size(Img{ImgSeqNum},tempi)*MPTPara.axesScale(tempi), : ) = []; end
-for tempi=1:3, parCoordA( parCoordA(:,tempi) < 1*MPTPara.axesScale(tempi), : ) = []; end
+%%%%% Remove parCoord outside the image area %%%%%
+parCoordA( parCoordA(:,1) > MPTPara.xRange(2),1) = [];
+parCoordA( parCoordA(:,2) > MPTPara.yRange(2),2) = [];
+parCoordA( parCoordA(:,3) > MPTPara.depthRange(2),3) = [];
+parCoordA( parCoordA(:,1) < MPTPara.xRange(1),1) = [];
+parCoordA( parCoordA(:,2) < MPTPara.yRange(1),2) = [];
+parCoordA( parCoordA(:,3) < MPTPara.depthRange(1),3) = [];
 
 %%%%% Plot %%%%%
 figure, plot3(parCoordA(:,1),parCoordA(:,2),parCoordA(:,3),'bo');

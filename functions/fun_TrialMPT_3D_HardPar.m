@@ -100,7 +100,7 @@ for tempi=1:3, parCoordB( parCoordB(:,tempi) < 1*MPTPara.axesScale(tempi), : ) =
 
 
 %%%%% Report detected beads # %%%%%
-% disp(['Detected particle # in ref image: ',num2str(size(parCoordA,1))]);
+disp(['Detected particle # in ref image: ',num2str(size(parCoordA,1))]);
 disp(['Detected particle # in def image: ',num2str(size(parCoordB,1))]);
 % disp('%%%%%% Detect particles: Done! %%%%%%'); fprintf('\n');
 
