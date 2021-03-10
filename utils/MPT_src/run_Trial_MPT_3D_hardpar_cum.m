@@ -175,7 +175,7 @@ for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     %%%%% Load image volumetric data %%%%%
     try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
     tempvol = load(file_names{ImgSeqNum}); fieldName = fieldnames(tempvol);
-    Img{2} = getfield(tempvol,fieldName{1}); clear tempvol; %#ok<GFLD>
+    Img{2} = getfield(tempvol,fieldName{2}); clear tempvol; %#ok<GFLD>
     if iscell(Img{2}), Img{2}=Img{2}{1}; end
     try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
     
