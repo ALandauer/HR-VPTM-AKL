@@ -30,12 +30,12 @@
 %%%%% Load 3D volumetric images %%%%%
 try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
 
-ImgSeqNum=1; [file_names,Img] = funReadImage3(fileNameAll,ImgSeqNum); % Load image
+ImgSeqNum=1; [file_names,Img] = funReadImage3([data_folder,dataset_subfolder,fileNamePrefix,'.mat'],ImgSeqNum); % Load image
 
 try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
 
-MPTPara.xRange = [0,size(Img{1},1)-1]*MPTPara.axes_scale(1);
-MPTPara.yRange = [0,size(Img{1},2)-1]*MPTPara.axes_scale(1);
+MPTPara.xRange = [0,size(Img{1},1)-1]*MPTPara.axesScale(1);
+MPTPara.yRange = [0,size(Img{1},2)-1]*MPTPara.axesScale(1);
 
 %%%%% Update MPTPara %%%%%
 MPTPara.gridxyzROIRange.gridx = [1,size(Img{1},1)];
@@ -88,14 +88,14 @@ if BeadPara.detectionMethod == 1
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
     x{1}{ImgSeqNum} = locateParticles(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum}); % Detect particles
     x{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x{1}{ImgSeqNum},beadParam_all{ImgSeqNum}); % Localize particles
-    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axes_scale; %convert to um units
+    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
 % ----------------------------
     
 %%%%% Method 2: Modified TracTrac code, better for lower density, medium size beads %%%%%
 elseif BeadPara.detectionMethod == 2
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
     x{1}{ImgSeqNum} = f_detect_particles3(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum});
-    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axes_scale; %convert to um units
+    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
     
 %%%%% Method 3: Deconv + Active contour code, better for large beads that need bespoke deconv %%%%%
 elseif BeadPara.detectionMethod == 3
@@ -104,7 +104,7 @@ elseif BeadPara.detectionMethod == 3
     BeadPara.deconvThresh = 0.05;
     BeadPara.deconvPrefilter = true; %true/false gaussian prefilter option
     BeadPara.deconvIter = 5;
-    BeadPara.psfSize = [15,15]; %x,y size of bead-based psf
+    BeadPara.psfSize = [25,25]; %x,y size of bead-based psf
     BeadPara.winSize = [7, 7, 7];
     BeadPara.ratThresh = 0.20;
     BeadPara.circThresh = 1.0;
@@ -119,7 +119,7 @@ elseif BeadPara.detectionMethod == 3
     [x{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
     %Use radial center-finding from TPT to get subpixel estimates based on the integer centroid locations
     x{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x{1}{ImgSeqNum},beadParam_all{ImgSeqNum});
-    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axes_scale; %convert to um units
+    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
     
 end
 
@@ -127,14 +127,14 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% Store particle positions as "parCoordA" %%%%%
-x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + [MPTPara.gridxyzROIRange.gridx(1)+MPTPara.xRange(1)-1*MPTPara.axes_scale(1), ...
-                                     MPTPara.gridxyzROIRange.gridy(1)+MPTPara.yRange(1)-1*MPTPara.axes_scale(2), ...
-                                     MPTPara.gridxyzROIRange.gridz(1)+MPTPara.depthRange(1)-1*MPTPara.axes_scale(3)];
+x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + [MPTPara.gridxyzROIRange.gridx(1)+MPTPara.xRange(1)-1*MPTPara.axesScale(1), ...
+                                     MPTPara.gridxyzROIRange.gridy(1)+MPTPara.yRange(1)-1*MPTPara.axesScale(2), ...
+                                     MPTPara.gridxyzROIRange.gridz(1)+MPTPara.depthRange(1)-1*MPTPara.axesScale(3)];
 parCoordA = x{1}{ImgSeqNum};
 
 %%%%% Remove bad parCoord outside the image area %%%%%
-for tempi=1:3, parCoordA( parCoordA(:,tempi) > size(Img{ImgSeqNum},tempi)*MPTPara.axes_scale(tempi), : ) = []; end
-for tempi=1:3, parCoordA( parCoordA(:,tempi) < 1*MPTPara.axes_scale(tempi), : ) = []; end
+for tempi=1:3, parCoordA( parCoordA(:,tempi) > size(Img{ImgSeqNum},tempi)*MPTPara.axesScale(tempi), : ) = []; end
+for tempi=1:3, parCoordA( parCoordA(:,tempi) < 1*MPTPara.axesScale(tempi), : ) = []; end
 
 %%%%% Plot %%%%%
 figure, plot3(parCoordA(:,1),parCoordA(:,2),parCoordA(:,3),'bo');
@@ -224,7 +224,7 @@ disp('%%%%% Plot tracked cumulative deformations %%%%%'); fprintf('\n');
 
 %%%%% Experimental parameters %%%%%
 %already handled in localization
-%try axes_scale = MPTPara.xstep; catch, axes_scale = [1,1,1]; end % unit: um/px
+%try axesScale = MPTPara.xstep; catch, axes_scale = [1,1,1]; end % unit: um/px
 axes_scale = [1,1,1];
 try tstep = MPTPara.tstep; catch, tstep = 1; end % unit: us
 % ImgSeqNum  % Frame #
@@ -330,7 +330,7 @@ parCoordB = resultDispCurr.parCoordB;
 
 
 %%%%% Interpolate scatterred data to gridded data %%%%%
-sxyz = min([round(0.5*MPTPara.f_o_s),20]).*MPTpara.axes_scale; % Step size for griddata
+sxyz = min([round(0.5*MPTPara.f_o_s),20]).*MPTpara.axesScale; % Step size for griddata
 smoothness = 1e-3; % Smoothness for regularization; "smoothness=0" means no regularization
 
 [x_Grid_refB,y_Grid_refB,z_Grid_refB,u_Grid_refB]=funScatter2Grid3D(parCoordB(:,1),parCoordB(:,2),parCoordB(:,3),disp_A2B_parCoordB(:,1),sxyz,smoothness);

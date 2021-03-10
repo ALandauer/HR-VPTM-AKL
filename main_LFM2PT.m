@@ -21,7 +21,8 @@ import2ws();
 
 %% Specify data to import
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-dataset = 'dx_singleLayer_5um'; %subfolder for a specific experiment
+dataset_subfolder = ['dx_singleLayer_11um',filesep]; %subfolder for a specific experiment
+fileNamePrefix = 'dx_*';
 
 %% ======================= SET-UP SECTION ============================
 
@@ -56,7 +57,7 @@ im_roi_mask_file_path = '';
 %%  ======================= oLaF SECTION ============================
 
 % get lenslet images for recon
-[LensletImageSeq, imageNames, WhiteImage, configFile] = LFM_selectImages(data_folder,dataset);
+[LensletImageSeq, imageNames, WhiteImage, configFile] = LFM_selectImages(data_folder,dataset_subfolder,fileNamePrefix);
 
 figure; imagesc(LensletImageSeq{1}); colormap inferno; title ('LF image #1'); drawnow
 
@@ -162,7 +163,7 @@ disp(['Particle type: ',MPTPara.parType]);
 disp('*************************************************************'); fprintf('\n');
 
 % get the data folder and name from the recon save
-[fileFolder,fileName,ext] = filepart(filename_cur);
+[fileFolder,fileName,ext] = fileparts(filename_cur);
 cur_dir = dir();
 cur_dir = cur_dir(1).folder;
 
@@ -208,7 +209,6 @@ extrapMethod = 'pchip';  % extrapolation scheme to connect split trajectory segm
 minTrajSegLength = 10;    % the minimum length of trajectory segment that will be extrapolate
 maxGapTrajSeqLength = 0; % the max frame# gap between connected trajectory segments
 
-
 %%%%% Run Trial-MPT tracking %%%%%
 if strcmpi(MPTPara.mode,'inc')
     if strcpmi(MPTPara.parType,'hard')
@@ -219,9 +219,9 @@ if strcmpi(MPTPara.mode,'inc')
         disp('Please enter a valid particle type')
     end
 elseif strcmpi(MPTPara.mode,'cum')
-    if strcpmi(MPTPara.parType,'hard')
+    if strcmpi(MPTPara.parType,'hard')
         run_Trial_MPT_3D_hardpar_cum;
-    elseif strcpmi(MPTPara.parType,'soft')
+    elseif strcmpi(MPTPara.parType,'soft')
         disp('not yet implemented');
     else
         disp('Please enter a valid particle type')

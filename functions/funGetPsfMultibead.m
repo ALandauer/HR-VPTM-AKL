@@ -21,9 +21,9 @@ disp('%%%%%% Collect bead PSF from volume %%%%%%')
 %display for the user and prompt for input
 f1 = figure;
 try
-    imagesc3d(img)
+    imagesc3D(img)
 catch
-    imagesc3d(img)
+    imshow3D(img)
 end
 drawnow
 

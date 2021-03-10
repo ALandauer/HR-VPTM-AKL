@@ -23,7 +23,7 @@ if exist([fileFolder,filesep,'PSF.mat'],'file') == 2
     load([fileFolder,filesep,'PSF.mat'])
     BeadPara.PSF = PSF;
 else
-    PSF = f_getPsfMultibead(vol_in,BeadPara.psfSize,BeadPara.numBeadsPSF);
+    PSF = funGetPsfMultibead(vol_in,BeadPara.psfSize,BeadPara.numBeadsPSF);
     save([fileFolder,filesep,'PSF.mat'],'PSF')
     BeadPara.PSF = PSF;
 end

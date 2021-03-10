@@ -4,32 +4,32 @@ function [file_name,Img] = funReadImage3(varargin)
 %
 % INPUTS
 % -------------------------------------------------------------------------
-%   filename: string for the filename prefix for the volumetric images in 
-%             the current directory.  
+%   filename: string for the filename prefix for the volumetric images in
+%             the current directory.
 %             Input options:
 %             --- If image is not within a cell) ---
-%             1) 'filename*.mat' or 'filename*' 
-% 
+%             1) 'filename*.mat' or 'filename*'
+%
 %             --- If image is within a cell that contains multichannels ---
 %             2) filename{1} = 'filename*.mat' or 'filename*' and
 %                filename{2} = channel number containing images you want to
 %                              run IDVC on.
 %                (if the channel is not provided, i.e. length(filename) = 1
 %                , then channel = 1
-%                 
+%
 % OUTPUTS
 % -------------------------------------------------------------------------
 %   file_name: Store 3D volumetric images file names
 %   Img: reference and deformed image;
 %       Img{1} = f: reference image
 %       Img{2} = g: deformed image
-%    
+%
 %
 % NOTES
 % -------------------------------------------------------------------------
 % none
-% 
-% For more information please see 
+%
+% For more information please see
 %
 
 % fprintf('Choose method to load images:  \n')
@@ -47,10 +47,10 @@ Img{1} = loadFile(fileInfo,1);
 
 %% ---- Opening and Reading Subsequent Images ---
 if ImgSeqNum>1
-% numImages = length(fileInfo.filename);
-for i = ImgSeqNum % 2:numImages % Reads Volumes Starting on the Second Volumes
-    Img{2} = loadFile(fileInfo,i);
-end
+    % numImages = length(fileInfo.filename);
+    for i = ImgSeqNum % 2:numImages % Reads Volumes Starting on the Second Volumes
+        Img{2} = loadFile(fileInfo,i);
+    end
 end
 
 end
@@ -63,7 +63,7 @@ end
 function I = loadFile(fileInfo,idx)
 I = load(fileInfo.filename{idx});
 fieldName = fieldnames(I);
-I = getfield(I,fieldName{1});
+I = getfield(I,fieldName{2});
 if iscell(I)
     if numel(I), I = I{1};
     else
@@ -74,7 +74,7 @@ end
 
 function varargout = parseInputs(varargin)
 %  = parseInputs(filename, sSize, sSizeMin, runMode)
- 
+
 ImgSeqNum = varargin{2};
 
 % Parse filenames
