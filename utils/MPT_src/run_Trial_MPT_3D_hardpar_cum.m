@@ -116,10 +116,10 @@ elseif BeadPara.detectionMethod == 3
     %run preprocessing to get PSF and deconvolve
     [vol_in,beadParam_all{ImgSeqNum}] = funPreprocLocalizeAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
     %find interger centriods
-    [x{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
+    [x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
     %Use radial center-finding from TPT to get subpixel estimates based on the integer centroid locations
-    x{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x{1}{ImgSeqNum},beadParam_all{ImgSeqNum});
-    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
+    x_sub{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum});
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
     
 end
 
@@ -127,19 +127,19 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% Store particle positions as "parCoordA" %%%%%
-x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + ...
+x{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum} + ...
     [MPTPara.gridxyzROIRange.gridx(1)*MPTPara.axesScale(1)+MPTPara.xRange(1)-1*MPTPara.axesScale(1), ...
     MPTPara.gridxyzROIRange.gridy(1)*MPTPara.axesScale(2)+MPTPara.yRange(1)-1*MPTPara.axesScale(2), ...
     MPTPara.gridxyzROIRange.gridz(1)*MPTPara.axesScale(3)+MPTPara.depthRange(1)-1*MPTPara.axesScale(3)];
 parCoordA = x{1}{ImgSeqNum};
 
 %%%%% Remove parCoord outside the image area %%%%%
-parCoordA( parCoordA(:,1) > MPTPara.xRange(2),1) = [];
-parCoordA( parCoordA(:,2) > MPTPara.yRange(2),2) = [];
-parCoordA( parCoordA(:,3) > MPTPara.depthRange(2),3) = [];
-parCoordA( parCoordA(:,1) < MPTPara.xRange(1),1) = [];
-parCoordA( parCoordA(:,2) < MPTPara.yRange(1),2) = [];
-parCoordA( parCoordA(:,3) < MPTPara.depthRange(1),3) = [];
+parCoordA( parCoordA(:,1) > MPTPara.xRange(2),:) = [];
+parCoordA( parCoordA(:,2) > MPTPara.yRange(2),:) = [];
+parCoordA( parCoordA(:,3) > MPTPara.depthRange(2),:) = [];
+parCoordA( parCoordA(:,1) < MPTPara.xRange(1),:) = [];
+parCoordA( parCoordA(:,2) < MPTPara.yRange(1),:) = [];
+parCoordA( parCoordA(:,3) < MPTPara.depthRange(1),:) = [];
 
 %%%%% Plot %%%%%
 figure, plot3(parCoordA(:,1),parCoordA(:,2),parCoordA(:,3),'bo');
