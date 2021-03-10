@@ -7,7 +7,7 @@
 function [LensletImageSeq, image_names, WhiteImage, configFile] = LFM_selectImages(folder,subfolder,fileNamePrefix)
 
 % Choose the raw images to reconstruct and correponding white image (to identify the mlens centers)
-files = dir(fullfile(folder, subfolder, [fileNamePrefix,'*.tif']));
+files = dir(fullfile(folder, subfolder, [fileNamePrefix,'.tif']));
 
 cnt = 1;
 for ii = 1:length(files)
