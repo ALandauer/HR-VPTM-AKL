@@ -135,14 +135,18 @@ while iterNum < maxIterNum
     matches_A2B = [];
     while isempty(matches_A2B) && n_neighborsMax < length(parNotMissingIndA)
         
-        if n_neighbors > 2
+        if n_neighbors > 4
             matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors );
             % matches_A2B = f_track_hist_match( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp );
+            
+%             track = TPT(parCoordA,parCoordBCurr,tptParam{1},predictor);
+            
         else
             matches_A2B = f_track_nearest_neighbour3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );
         end
+        
         if isempty(matches_A2B) == 1
-            n_neighborsMax = round(n_neighborsMax + 5);
+            n_neighborsMax = round(n_neighborsMax + 3);
         else
             matches_A2B = [parNotMissingIndA(matches_A2B(:,1)), parNotMissingIndBCurr(matches_A2B(:,2))];
             [track_A2B, u_A2B] = funCompDisp3(parCoordA, parCoordBCurr, matches_A2B, outlrThres);
@@ -151,19 +155,135 @@ while iterNum < maxIterNum
         end
     end
     if isempty(matches_A2B)==1
-        disp('Wrong parameters!'); 
-        break; 
+        disp('Wrong parameters!');
+        break;
     end
     
     
-    
-    %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%% Global step: Compute kinematically compatible displacement %%%%%
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%% Method I: local moving least squares %%%%%
-    if gbSolver==1
+    if iterNum > 3
+        %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%% Global step: Compute kinematically compatible displacement %%%%%
         
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%% Method I: local moving least squares %%%%%
+        if gbSolver==1
+            
+            [XYZ_B2A_refB,U_B2A_refB,F_B2A_refB] = funCompDefGrad3(-u_A2B, parCoordBCurr(track_A2B(track_A2B>0),:), f_o_s, n_neighbors);
+            
+            [row,~] = find(isnan(U_B2A_refB(1:3:end)) == 1);         % find nans
+            XYZ_B2A_refB(row,:) = [];                                % remove nans
+            U_B2A_refB([3*row-2; 3*row-1; 3*row]) = [];              % remove nans
+            F_B2A_refB([9*row-8; 9*row-7; 9*row-6; 9*row-5;  ...
+                9*row-4; 9*row-3; 9*row-2; 9*row-1; 9*row]) = [];    % remove nans
+            
+            Fx = scatteredInterpolant(XYZ_B2A_refB,U_B2A_refB(1:3:end),'linear','linear');
+            tempu = Fx(parCoordBCurr); % Interpolate temporary x-displacement
+            Fy = scatteredInterpolant(XYZ_B2A_refB,U_B2A_refB(2:3:end),'linear','linear');
+            tempv = Fy(parCoordBCurr); % Interpolate temporary y-displacement
+            Fz = scatteredInterpolant(XYZ_B2A_refB,U_B2A_refB(3:3:end),'linear','linear');
+            tempw = Fz(parCoordBCurr); % Interpolate temporary z-displacement
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%% Method II: global regularization %%%%%
+        elseif gbSolver==2
+            
+            tempUVW_B2A = -u_A2B;
+            tempXYZ_refB = parCoordBCurr(track_A2B(track_A2B>0),:);
+            try
+                try
+                    [xGrid_refB,yGrid_refB,zGrid_refB,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),sxyz,smoothness);
+                    [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),sxyz,smoothness);
+                    [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),sxyz,smoothness);
+                catch
+                    [xGrid_refB,yGrid_refB,zGrid_refB,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),sxyz,0);
+                    [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),sxyz,0);
+                    [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),sxyz,0);
+                end
+            catch
+                [xGrid_refB,yGrid_refB,zGrid_refB,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),[1,1,1],0);
+                [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),[1,1,1],0);
+                [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),[1,1,1],0);
+            end
+            Fx = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],uGrid_B2A_refB_iter(:),'linear','linear');
+            tempu = Fx(parCoordBCurr);
+            Fy = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],vGrid_B2A_refB_iter(:),'linear','linear');
+            tempv = Fy(parCoordBCurr);
+            Fz = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],wGrid_B2A_refB_iter(:),'linear','linear');
+            tempw = Fz(parCoordBCurr);
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%% Method III: augmented Lagrangian regularization %%%%%
+        elseif gbSolver==3
+            
+            tempUVW_B2A = -u_A2B;
+            tempXYZ_refB = parCoordBCurr(track_A2B(track_A2B>0),:);
+            if iterNum==1
+                [xGrid_refB,yGrid_refB,zGrid_refB] = ndgrid(TPTpara.gridxyzROIRange.gridx(1) : sxyz(1) : TPTpara.gridxyzROIRange.gridx(2), ...
+                    TPTpara.gridxyzROIRange.gridy(1) : sxyz(2) : TPTpara.gridxyzROIRange.gridy(2), ...
+                    TPTpara.gridxyzROIRange.gridz(1) : sxyz(3) : TPTpara.gridxyzROIRange.gridz(2) );
+            end
+            try
+                try
+                    [~,~,~,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),sxyz,smoothness,xGrid_refB,yGrid_refB,zGrid_refB);
+                    [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),sxyz,smoothness,xGrid_refB,yGrid_refB,zGrid_refB);
+                    [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),sxyz,smoothness,xGrid_refB,yGrid_refB,zGrid_refB);
+                catch
+                    [~,~,~,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),sxyz,0,xGrid_refB,yGrid_refB,zGrid_refB);
+                    [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),sxyz,0,xGrid_refB,yGrid_refB,zGrid_refB);
+                    [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),sxyz,0,xGrid_refB,yGrid_refB,zGrid_refB);
+                end
+            catch
+                [~,~,~,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),[1,1,1],0,xGrid_refB,yGrid_refB,zGrid_refB);
+                [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),[1,1,1],0,xGrid_refB,yGrid_refB,zGrid_refB);
+                [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),[1,1,1],0,xGrid_refB,yGrid_refB,zGrid_refB);
+            end
+            
+            [M,N,L] = size(uGrid_B2A_refB_iter); % Grid size [M,N,L]
+            DMat = funDerivativeOp3(M,N,L,mean(sxyz)*[1,1,1]); % Build a finite different operator such that {F}={D}{U}
+            uVec = [uGrid_B2A_refB_iter(:),vGrid_B2A_refB_iter(:),wGrid_B2A_refB_iter(:)]'; uVec=uVec(:);
+            
+            %%%%% Tune parameter alpha by L-curve method %%%%%
+            if iterNum==1
+                vdualVec=0*uVec; mu=1; alphaList=[1e-2,1e-1,1e0,1e1,1e2,1e3];
+                for tempi = 1:length(alphaList)
+                    alpha = alphaList(tempi);
+                    uhatVec = (alpha*(DMat')*DMat + speye(3*M*N*L))\((uVec-vdualVec));
+                    Err1(tempi) = sqrt((uhatVec-uVec+vdualVec)'*(uhatVec-uVec+vdualVec));
+                    Err2(tempi) = sqrt((DMat*uhatVec)'*(DMat*uhatVec));
+                end
+                ErrSum = Err1/max(Err1) + Err2/max(Err2);
+                [~,indexOfalpha] = min(ErrSum);
+                try % Find the best value of alpha by a quadratic polynomial fitting
+                    [fitobj] = fit(log10(alphaList(indexOfalpha-1:1:indexOfalpha+1))',ErrSum(indexOfalpha-1:1:indexOfalpha+1),'poly2');
+                    p = coeffvalues(fitobj); alpha_best = 10^(-p(2)/2/p(1));
+                catch, alpha_best = alphaList(indexOfalpha);
+                end
+            end
+            
+            %%%%% Resolve global step with tuned best alpha %%%%%
+            uhatVec = (alpha_best*(DMat')*DMat + speye(3*M*N*L))\((uVec-vdualVec));
+            
+            %%%%% Update dual variable
+            vdualVec = vdualVec + uhatVec - uVec;
+            
+            %%%%% Interpolate to scatterred data points %%%%%
+            uGrid_B2A_refB_iter = reshape( uhatVec(1:3:end), size(uGrid_B2A_refB_iter) );
+            vGrid_B2A_refB_iter = reshape( uhatVec(2:3:end), size(uGrid_B2A_refB_iter) );
+            wGrid_B2A_refB_iter = reshape( uhatVec(3:3:end), size(uGrid_B2A_refB_iter) );
+            
+            Fx = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],uGrid_B2A_refB_iter(:),'linear','linear');
+            tempu = Fx(parCoordBCurr);
+            Fy = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],vGrid_B2A_refB_iter(:),'linear','linear');
+            tempv = Fy(parCoordBCurr);
+            Fz = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],wGrid_B2A_refB_iter(:),'linear','linear');
+            tempw = Fz(parCoordBCurr);
+            
+            
+        end % END of if gbSolver==0
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    else
         [XYZ_B2A_refB,U_B2A_refB,F_B2A_refB] = funCompDefGrad3(-u_A2B, parCoordBCurr(track_A2B(track_A2B>0),:), f_o_s, n_neighbors);
         
         [row,~] = find(isnan(U_B2A_refB(1:3:end)) == 1);         % find nans
@@ -179,107 +299,7 @@ while iterNum < maxIterNum
         Fz = scatteredInterpolant(XYZ_B2A_refB,U_B2A_refB(3:3:end),'linear','linear');
         tempw = Fz(parCoordBCurr); % Interpolate temporary z-displacement
         
-        
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%% Method II: global regularization %%%%%
-    elseif gbSolver==2
-        
-        tempUVW_B2A = -u_A2B;
-        tempXYZ_refB = parCoordBCurr(track_A2B(track_A2B>0),:);
-        try
-            try
-                [xGrid_refB,yGrid_refB,zGrid_refB,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),sxyz,smoothness);
-                [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),sxyz,smoothness);
-                [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),sxyz,smoothness);
-            catch
-                [xGrid_refB,yGrid_refB,zGrid_refB,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),sxyz,0);
-                [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),sxyz,0);
-                [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),sxyz,0);
-            end
-        catch
-            [xGrid_refB,yGrid_refB,zGrid_refB,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),[1,1,1],0);
-            [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),[1,1,1],0);
-            [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),[1,1,1],0);
-        end
-        Fx = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],uGrid_B2A_refB_iter(:),'linear','linear');
-        tempu = Fx(parCoordBCurr);
-        Fy = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],vGrid_B2A_refB_iter(:),'linear','linear');
-        tempv = Fy(parCoordBCurr);
-        Fz = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],wGrid_B2A_refB_iter(:),'linear','linear');
-        tempw = Fz(parCoordBCurr);
-        
-        
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%% Method III: augmented Lagrangian regularization %%%%%
-    elseif gbSolver==3
-        
-        tempUVW_B2A = -u_A2B;
-        tempXYZ_refB = parCoordBCurr(track_A2B(track_A2B>0),:);
-        if iterNum==1
-            [xGrid_refB,yGrid_refB,zGrid_refB] = ndgrid(TPTpara.gridxyzROIRange.gridx(1) : sxyz(1) : TPTpara.gridxyzROIRange.gridx(2), ...
-                TPTpara.gridxyzROIRange.gridy(1) : sxyz(2) : TPTpara.gridxyzROIRange.gridy(2), ...
-                TPTpara.gridxyzROIRange.gridz(1) : sxyz(3) : TPTpara.gridxyzROIRange.gridz(2) );
-        end
-        try
-            try
-                [~,~,~,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),sxyz,smoothness,xGrid_refB,yGrid_refB,zGrid_refB);
-                [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),sxyz,smoothness,xGrid_refB,yGrid_refB,zGrid_refB);
-                [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),sxyz,smoothness,xGrid_refB,yGrid_refB,zGrid_refB);
-            catch
-                [~,~,~,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),sxyz,0,xGrid_refB,yGrid_refB,zGrid_refB);
-                [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),sxyz,0,xGrid_refB,yGrid_refB,zGrid_refB);
-                [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),sxyz,0,xGrid_refB,yGrid_refB,zGrid_refB);
-            end
-        catch
-            [~,~,~,uGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,1),[1,1,1],0,xGrid_refB,yGrid_refB,zGrid_refB);
-            [~,~,~,vGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,2),[1,1,1],0,xGrid_refB,yGrid_refB,zGrid_refB);
-            [~,~,~,wGrid_B2A_refB_iter]=funScatter2Grid3D(tempXYZ_refB(:,1),tempXYZ_refB(:,2),tempXYZ_refB(:,3),tempUVW_B2A(:,3),[1,1,1],0,xGrid_refB,yGrid_refB,zGrid_refB);
-        end
-        
-        [M,N,L] = size(uGrid_B2A_refB_iter); % Grid size [M,N,L]
-        DMat = funDerivativeOp3(M,N,L,mean(sxyz)*[1,1,1]); % Build a finite different operator such that {F}={D}{U}
-        uVec = [uGrid_B2A_refB_iter(:),vGrid_B2A_refB_iter(:),wGrid_B2A_refB_iter(:)]'; uVec=uVec(:);
-        
-        %%%%% Tune parameter alpha by L-curve method %%%%%
-        if iterNum==1
-            vdualVec=0*uVec; mu=1; alphaList=[1e-2,1e-1,1e0,1e1,1e2,1e3];
-            for tempi = 1:length(alphaList)
-                alpha = alphaList(tempi);
-                uhatVec = (alpha*(DMat')*DMat + speye(3*M*N*L))\((uVec-vdualVec));
-                Err1(tempi) = sqrt((uhatVec-uVec+vdualVec)'*(uhatVec-uVec+vdualVec));
-                Err2(tempi) = sqrt((DMat*uhatVec)'*(DMat*uhatVec));
-            end
-            ErrSum = Err1/max(Err1) + Err2/max(Err2);
-            [~,indexOfalpha] = min(ErrSum);
-            try % Find the best value of alpha by a quadratic polynomial fitting
-                [fitobj] = fit(log10(alphaList(indexOfalpha-1:1:indexOfalpha+1))',ErrSum(indexOfalpha-1:1:indexOfalpha+1),'poly2');
-                p = coeffvalues(fitobj); alpha_best = 10^(-p(2)/2/p(1));
-            catch, alpha_best = alphaList(indexOfalpha);
-            end
-        end
-        
-        %%%%% Resolve global step with tuned best alpha %%%%%
-        uhatVec = (alpha_best*(DMat')*DMat + speye(3*M*N*L))\((uVec-vdualVec));
-        
-        %%%%% Update dual variable
-        vdualVec = vdualVec + uhatVec - uVec;
-        
-        %%%%% Interpolate to scatterred data points %%%%%
-        uGrid_B2A_refB_iter = reshape( uhatVec(1:3:end), size(uGrid_B2A_refB_iter) );
-        vGrid_B2A_refB_iter = reshape( uhatVec(2:3:end), size(uGrid_B2A_refB_iter) );
-        wGrid_B2A_refB_iter = reshape( uhatVec(3:3:end), size(uGrid_B2A_refB_iter) );
-        
-        Fx = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],uGrid_B2A_refB_iter(:),'linear','linear');
-        tempu = Fx(parCoordBCurr);
-        Fy = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],vGrid_B2A_refB_iter(:),'linear','linear');
-        tempv = Fy(parCoordBCurr);
-        Fz = scatteredInterpolant([xGrid_refB(:),yGrid_refB(:),zGrid_refB(:)],wGrid_B2A_refB_iter(:),'linear','linear');
-        tempw = Fz(parCoordBCurr);
-        
-        
-    end % END of if gbSolver==0
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+    end
     
     
     %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -307,8 +327,8 @@ while iterNum < maxIterNum
         tempv_Quantile = quantile(tempv,[0.25,0.5,0.75]);
         tempw_Quantile = quantile(tempw,[0.25,0.5,0.75]);
         f_o_s = max( [ 60; tempu_Quantile(2)+0.5*(tempu_Quantile(3)-tempu_Quantile(1));
-                           tempv_Quantile(2)+0.5*(tempv_Quantile(3)-tempv_Quantile(1));
-                           tempw_Quantile(2)+0.5*(tempw_Quantile(3)-tempw_Quantile(1))]);
+            tempv_Quantile(2)+0.5*(tempv_Quantile(3)-tempv_Quantile(1));
+            tempw_Quantile(2)+0.5*(tempw_Quantile(3)-tempw_Quantile(1))]);
         
         %%%%% Remove non-paired particles because of particle missing or merging %%%%%
         if n_neighbors < 4 %  n_neighborsMax/2

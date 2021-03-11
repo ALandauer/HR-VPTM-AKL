@@ -30,12 +30,12 @@
 %%%%% Load 3D volumetric images %%%%%
 try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
 
-ImgSeqNum=1; [file_name,Img] = funReadImage3(fileNameAll,ImgSeqNum); % Load reference image
+ImgSeqNum=1; [file_namess,Img] = funReadImage3([data_folder,data_subfolder,fileNamePrefix,'.mat'],ImgSeqNum); % Load image
 
 try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
 
-MPTPara.xRange = [0,size(Img{1},1)-1];
-MPTPara.yRange = [0,size(Img{1},2)-1];
+MPTPara.xRange = [0,size(Img{1},1)-1]*MPTPara.axesScale(1);
+MPTPara.yRange = [0,size(Img{1},2)-1]*MPTPara.axesScale(1);
 
 %%%%% Update MPTPara %%%%%
 MPTPara.gridxyzROIRange.gridx = [1,size(Img{1},1)];
@@ -85,15 +85,15 @@ end
 %%%%% Method 1: TPT code %%%%%
 if BeadPara.detectionMethod == 1 
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
-    x{1}{ImgSeqNum} = locateParticles(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum}); % Detect particles
-    x{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x{1}{ImgSeqNum},beadParam_all{ImgSeqNum}); % Localize particles
-    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axes_scale; %convert to um units
+    x_px{1}{ImgSeqNum} = locateParticles(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum}); % Detect particles
+    x_sub{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}); % Localize particles
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
 % ----------------------------
 %%%%% Method 2: Modified TracTrac code %%%%%
 elseif BeadPara.detectionMethod == 2
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
-    x{1}{ImgSeqNum} = f_detect_particles3(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum});
-    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axes_scale; %convert to um units
+    x_sub{1}{ImgSeqNum} = f_detect_particles3(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum});
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
     
 %%%%% Method 3: Deconv + Active contour code, better for large beads that need bespoke deconv %%%%%
 elseif BeadPara.detectionMethod == 3
@@ -114,24 +114,28 @@ elseif BeadPara.detectionMethod == 3
     %run preprocessing to get PSF and deconvolve
     [vol_in,beadParam_all{ImgSeqNum}] = funPreprocLocalizeAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
     %find interger centriods
-    [x{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
+    [x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
     %Use radial center-finding from TPT to get subpixel estimates based on the integer centroid locations
-    x{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x{1}{ImgSeqNum},beadParam_all{ImgSeqNum});
-    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axes_scale; %convert to um units
+    x_sub{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum});
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
     
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %%%%% Store particle positions as "parCoordA" %%%%%
-x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + [MPTPara.gridxyzROIRange.gridx(1)+MPTPara.xRange(1)-1*MPTPara.axes_scale(1), ...
-                                     MPTPara.gridxyzROIRange.gridy(1)+MPTPara.yRange(1)-1*MPTPara.axes_scale(2), ...
-                                     MPTPara.gridxyzROIRange.gridz(1)+MPTPara.depthRange(1)-1*MPTPara.axes_scale(3)];
+x{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum} + ...
+    [MPTPara.gridxyzROIRange.gridx(1)*MPTPara.axesScale(1)+MPTPara.xRange(1)-1*MPTPara.axesScale(1), ...
+    MPTPara.gridxyzROIRange.gridy(1)*MPTPara.axesScale(2)+MPTPara.yRange(1)-1*MPTPara.axesScale(2), ...
+    MPTPara.gridxyzROIRange.gridz(1)*MPTPara.axesScale(3)+MPTPara.depthRange(1)-1*MPTPara.axesScale(3)];
 parCoordA = x{1}{ImgSeqNum};
 
-%%%%% Remove bad parCoord outside the image area %%%%%
-for tempi=1:3, parCoordA( parCoordA(:,tempi) > size(Img{ImgSeqNum},tempi)*MPTPara.axes_scale(tempi), : ) = []; end
-for tempi=1:3, parCoordA( parCoordA(:,tempi) < 1*MPTPara.axes_scale(tempi), : ) = []; end
+%%%%% Remove parCoord outside the image area %%%%%
+parCoordA( parCoordA(:,1) > MPTPara.xRange(2),:) = [];
+parCoordA( parCoordA(:,2) > MPTPara.yRange(2),:) = [];
+parCoordA( parCoordA(:,3) > MPTPara.depthRange(2),:) = [];
+parCoordA( parCoordA(:,1) < MPTPara.xRange(1),:) = [];
+parCoordA( parCoordA(:,2) < MPTPara.yRange(1),:) = [];
+parCoordA( parCoordA(:,3) < MPTPara.depthRange(1),:) = [];
  
 %%%%% Plot %%%%%
 figure, plot3(parCoordA(:,1),parCoordA(:,2),parCoordA(:,3),'bo');
@@ -158,21 +162,22 @@ disp('%%%%%% Detect particles: Done! %%%%%%'); fprintf('\n');
 % MPTPara.strain_f_o_s = 60;       % Size of virtual strain gauge
 % MPTPara.usePrevResults = 0;      % Whether use previous results or not: 0-no; 1-yes;
 
+
 %%%%%% To store results %%%%%
-parCoord_prev = cell(length(file_name)-1,1);  parCoord_prev{1} = parCoordA;
-track_A2B_prev = cell(length(file_name)-1,1); track_B2A_prev = cell(length(file_name)-1,1);
-uvw_B2A_prev = cell(length(file_name)-1,1);
+parCoord_prev = cell(length(file_namess)-1,1);  parCoord_prev{1} = parCoordA;
+track_A2B_prev = cell(length(file_names)-1,1); track_B2A_prev = cell(length(file_names)-1,1);
+uvw_B2A_prev = cell(length(file_names)-1,1);
 
  
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for ImgSeqNum = 2 : length(file_name)  % "ImgSeqNum" is the frame index
+for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     
     disp(['====== Frame #',num2str(ImgSeqNum),' ======']);
     
     %%%%% Load image volumetric data %%%%%
     try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
-    tempvol = load(file_name{ImgSeqNum}); fieldName = fieldnames(tempvol);
-    Img{2} = getfield(tempvol,fieldName{1}); clear tempvol; %#ok<GFLD>
+    tempvol = load(file_names{ImgSeqNum}); fieldName = fieldnames(tempvol);
+    Img{2} = getfield(tempvol,fieldName{2}); clear tempvol; %#ok<GFLD>
     if iscell(Img{2}), Img{2}=Img{2}{1}; end
     try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
 
@@ -191,10 +196,10 @@ end
 
 %%%%% Incremental tracking ratio %%%%%
 disp('%%%%% Calculate incremental tracking ratio %%%%%'); fprintf('\n');
-track_ratio = zeros(length(file_name)-1,1);
-DefType = 'exp'; defList = [2:1:length(file_name)]';
+track_ratio = zeros(length(file_names)-1,1);
+DefType = 'exp'; defList = [2:1:length(file_names)]';
   
-for ImgSeqNum = 2 : length(file_name)
+for ImgSeqNum = 2 : length(file_names)
     track_A2B = track_A2B_prev{ImgSeqNum-1}; 
     track_ratio(ImgSeqNum-1) = length(track_A2B(track_A2B>0))/size(parCoord_prev{ImgSeqNum},1);      
 end
@@ -202,12 +207,12 @@ end
 fig=figure; ax=axes; hold on; plot(defList,track_ratio,'r^-.','linewidth',1);
 adjust_fig(fig,ax,'','',''); box on; title('');
 xlabel('Frame #'); ylabel('Tracking ratio');
-axis([2,length(file_name),0,1]);
+axis([2,length(file_names),0,1]);
 
 %%%%% Save results %%%%%
 disp('%%%%%% Trial-MPT 3D hard particle tracking: Done! %%%%%%'); fprintf('\n');
-results_file_name = 'results_3D_hardpar.mat';
-save(results_file_name,'parCoord_prev','uvw_B2A_prev','track_A2B_prev','track_B2A_prev');
+results_file_names = 'results_3D_hardpar.mat';
+save(results_file_names,'parCoord_prev','uvw_B2A_prev','track_A2B_prev','track_B2A_prev');
  
 
 
@@ -228,7 +233,7 @@ try tstep = MPTPara.tstep; catch, tstep = 1; end % unit: us
 %%%%% Make a video %%%%%
 v = VideoWriter('video_3D_inc.avi'); v.FrameRate = 5; open(v); figure,
 
-for ImgSeqNum = 2:length(file_name) % ImgSeqNum: Frame #
+for ImgSeqNum = 2:length(file_names) % ImgSeqNum: Frame #
     
     % Displacement from tracked particles on deformed frame
     disp_A2B_parCoordB = -uvw_B2A_prev{ImgSeqNum-1};
@@ -501,29 +506,29 @@ axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
 disp('%%%%% Plot tracked cumulative displacements %%%%%'); fprintf('\n');
 parCoordTrajMat = cell2mat( parCoordTraj );
 
-[row1,col1] = find(isnan(parCoordTrajMat(1:length(file_name):end,1))==0);
+[row1,col1] = find(isnan(parCoordTrajMat(1:length(file_names):end,1))==0);
 trackParCum_ind = row1;
 trackParCum_track_ratio = [];
 
-for ImgSeqNum = 2:length(file_name)
-    [row2,col2] = find(isnan(parCoordTrajMat(ImgSeqNum:length(file_name):end,1))==0);
+for ImgSeqNum = 2:length(file_names)
+    [row2,col2] = find(isnan(parCoordTrajMat(ImgSeqNum:length(file_names):end,1))==0);
     trackParCum_ind = intersect(row2,trackParCum_ind);
     trackParCum_track_ratio(ImgSeqNum-1) = length(trackParCum_ind) / size(parCoord_prev{1},1);
 end
 
-defList = [2:1:length(file_name)];
+defList = [2:1:length(file_names)];
 fig=figure; ax=axes; hold on; plot(defList,trackParCum_track_ratio,'bs--','linewidth',1);
 adjust_fig(fig,ax,'','',''); box on; title('');
 xlabel('Image #'); ylabel('Tracking ratio');
-axis([2,length(file_name),0,1]);
+axis([2,length(file_names),0,1]);
 
 %%%%% Plot tracked cumulative displacement field %%%%%
 %%%%% Make a video %%%%%
 v = VideoWriter('video_3D_inc_cum.avi'); v.FrameRate = 5; open(v); figure,
-for ImgSeqNum = 2:length(file_name)
+for ImgSeqNum = 2:length(file_names)
     
-    parCoordA = parCoordTrajMat(1:length(file_name):end,1:3);
-    parCoordB = parCoordTrajMat(ImgSeqNum:length(file_name):end,1:3);
+    parCoordA = parCoordTrajMat(1:length(file_names):end,1:3);
+    parCoordB = parCoordTrajMat(ImgSeqNum:length(file_names):end,1:3);
     parCoordACum = parCoordA(trackParCum_ind,:);
     parCoordBCum = parCoordB(trackParCum_ind,:);
     disp_A2BCum = parCoordBCum - parCoordACum;
@@ -554,14 +559,14 @@ pause;
 ImgSeqNum = 2; % Frame #
 
 %%%%% Previously tracked displacement field %%%%%
-parCoordA = parCoordTrajMat(1:length(file_name):end,1:3);
-parCoordB = parCoordTrajMat(ImgSeqNum:length(file_name):end,1:3);
+parCoordA = parCoordTrajMat(1:length(file_names):end,1:3);
+parCoordB = parCoordTrajMat(ImgSeqNum:length(file_names):end,1:3);
 parCoordACum = parCoordA(trackParCum_ind,1:3);
 parCoordBCum = parCoordB(trackParCum_ind,1:3);
 disp_A2BCum = parCoordBCum - parCoordACum;
   
 %%%%% Interpolate scatterred data to gridded data %%%%%
-sxyz = min([round(0.5*MPTPara.f_o_s),20]).*MPTPara.axes_scale; % Step size for griddata
+sxyz = min([round(0.5*MPTPara.f_o_s),20]).*MPTPara.axesScale; % Step size for griddata
 smoothness = 1e-3; % Smoothness for regularization; "smoothness=0" means no regularization
 
 [x_Grid_refB,y_Grid_refB,z_Grid_refB,u_Grid_refB]=funScatter2Grid3D(parCoordBCum(:,1),parCoordBCum(:,2),parCoordBCum(:,3),disp_A2BCum(:,1),sxyz,smoothness);

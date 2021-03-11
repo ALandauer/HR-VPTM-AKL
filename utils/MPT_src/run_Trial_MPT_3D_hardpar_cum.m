@@ -30,7 +30,7 @@
 %%%%% Load 3D volumetric images %%%%%
 try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
 
-ImgSeqNum=1; [file_names,Img] = funReadImage3([data_folder,dataset_subfolder,fileNamePrefix,'.mat'],ImgSeqNum); % Load image
+ImgSeqNum=1; [file_names,Img] = funReadImage3([data_folder,data_subfolder,fileNamePrefix,'.mat'],ImgSeqNum); % Load image
 
 try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
 
@@ -86,16 +86,16 @@ end
 %%%%% Method 1: TPT code, better for high-density seeding %%%%%
 if BeadPara.detectionMethod == 1
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
-    x{1}{ImgSeqNum} = locateParticles(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum}); % Detect particles
-    x{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x{1}{ImgSeqNum},beadParam_all{ImgSeqNum}); % Localize particles
-    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
+    x_px{1}{ImgSeqNum} = locateParticles(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum}); % Detect particles
+    x_sub{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}); % Localize particles
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
 % ----------------------------
     
 %%%%% Method 2: Modified TracTrac code, better for lower density, medium size beads %%%%%
 elseif BeadPara.detectionMethod == 2
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
-    x{1}{ImgSeqNum} = f_detect_particles3(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum});
-    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
+    x_sub{1}{ImgSeqNum} = f_detect_particles3(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum});
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
     
 %%%%% Method 3: Deconv + Active contour code, better for large beads that need bespoke deconv %%%%%
 elseif BeadPara.detectionMethod == 3
@@ -172,7 +172,7 @@ uvw_B2A_prev = cell(length(file_names)-1,1);    track_A2B_prev = cell(length(fil
 resultDisp = cell(length(file_names)-1,1);      resultDefGrad = cell(length(file_names)-1,1);
 
 
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     
     disp(['====== Frame #',num2str(ImgSeqNum),' ======']);

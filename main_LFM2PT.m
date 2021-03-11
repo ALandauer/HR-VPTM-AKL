@@ -21,7 +21,7 @@ import2ws();
 
 %% Specify data to import
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-dataset_subfolder = ['dx_singleLayer_11um',filesep]; %subfolder for a specific experiment
+data_subfolder = ['dx_singleLayer_11um',filesep]; %subfolder for a specific experiment
 fileNamePrefix = 'dx_*';
 
 %% ======================= SET-UP SECTION ============================
@@ -46,7 +46,7 @@ MPTPara.axesScale = [1.64,1.64,depthStep]; % unit: um/px
 MPTPara.depthRange = depthRange; % unit: um/px
 MPTPara.tstep = 1; % unit: us
 
-MPTPara.mode = 'cum'; % {'inc': incremental mode; 'cum': cumulative mode}
+MPTPara.mode = 'inc'; % {'inc': incremental mode; 'cum': cumulative mode}
 MPTPara.parType = 'hard'; % {'hard': hard particle; 'soft': soft particle}
 
 % Bead detection method
@@ -57,7 +57,7 @@ im_roi_mask_file_path = '';
 %%  ======================= oLaF SECTION ============================
 
 % get lenslet images for recon
-[LensletImageSeq, imageNames, WhiteImage, configFile] = LFM_selectImages(data_folder,dataset_subfolder,fileNamePrefix);
+[LensletImageSeq, imageNames, WhiteImage, configFile] = LFM_selectImages(data_folder,data_subfolder,fileNamePrefix);
 
 figure; imagesc(LensletImageSeq{1}); colormap inferno; title ('LF image #1'); drawnow
 
@@ -147,7 +147,7 @@ for ii = 1:length(LensletImageSeq)
     
     LensletImage = LensletImageSeq{ii};
     %save out the recon'd image
-    save(filename_cur,'reconVolume','LensletImage')
+    save(filename_cur,'reconVolume','LensletImage','filename_cur')
     
 end
 
@@ -162,10 +162,16 @@ disp(['Tracking mode: ',MPTPara.mode]);
 disp(['Particle type: ',MPTPara.parType]);
 disp('*************************************************************'); fprintf('\n');
 
+
 % get the data folder and name from the recon save
-[fileFolder,fileName,ext] = fileparts(filename_cur);
 cur_dir = dir();
 cur_dir = cur_dir(1).folder;
+try
+    [fileFolder,fileName,ext] = fileparts(filename_cur);
+catch
+    tempf = dir([data_folder,data_subfolder,'*.mat']);
+    [fileFolder,~,~] = fileparts([tempf(1).folder,filesep,tempf(1).name]);
+end
 
 %%%%% Trial-MPT path %%%%%
 fileTrialMPTPath = cur_dir;
@@ -190,20 +196,20 @@ BeadPara.color = 'white';       % By default
 % Trial-MPT tracking
 
 %%%%% Trial-MPT Parameter %%%%%
-MPTPara.f_o_s = 60;              % Size of search field: max(|u|,|v|,|w|)
-MPTPara.n_neighborsMax = 15;     % Max # of neighboring particles
+MPTPara.f_o_s = Inf;              % Size of search field: max(|u|,|v|,|w|)
+MPTPara.n_neighborsMax = 8;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
 MPTPara.smoothness = 1e-1;       % Coefficient of regularization
-MPTPara.outlrThres = 5;          % Threshold for removing outliers in MPT
-MPTPara.maxIterNum = 20;         % Max ADMM iteration number
+MPTPara.outlrThres = 0;          % Threshold for removing outliers in MPT
+MPTPara.maxIterNum = 5;         % Max ADMM iteration number
 MPTPara.iterStopThres = 1e-3;    % ADMM iteration stopping threshold
-MPTPara.strain_n_neighbors = 20; % # of neighboring particles used in strain gauge
-MPTPara.strain_f_o_s = 60;       % Size of virtual strain gauge
-MPTPara.usePrevResults = 0;      % Whether use previous results or not: 0-no; 1-yes;
+MPTPara.strain_n_neighbors = 8; % # of neighboring particles used in strain gauge
+MPTPara.strain_f_o_s = Inf;       % Size of virtual strain gauge
+MPTPara.usePrevResults = 1;      % Whether use previous results or not: 0-no; 1-yes;
 
 %%%% Postprocessing: merge trajectory segments %%%%%
-distThres = 1; % distance threshold to connect split trajectory segments
+distThres = 5; % distance threshold to connect split trajectory segments
 extrapMethod = 'pchip';  % extrapolation scheme to connect split trajectory segments
                          % suggestion: 'nearest' for Brownian motion
 minTrajSegLength = 10;    % the minimum length of trajectory segment that will be extrapolate
@@ -211,9 +217,9 @@ maxGapTrajSeqLength = 0; % the max frame# gap between connected trajectory segme
 
 %%%%% Run Trial-MPT tracking %%%%%
 if strcmpi(MPTPara.mode,'inc')
-    if strcpmi(MPTPara.parType,'hard')
+    if strcmpi(MPTPara.parType,'hard')
         run_Trial_MPT_3D_hardpar_inc;
-    elseif strcpmi(MPTPara.parType,'soft')
+    elseif strcmpi(MPTPara.parType,'soft')
         disp('not yet implemented');
     else
         disp('Please enter a valid particle type')
