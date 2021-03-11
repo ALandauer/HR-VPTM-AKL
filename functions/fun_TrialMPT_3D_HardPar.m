@@ -69,10 +69,10 @@ elseif BeadPara.detectionMethod == 3
     %run preprocessing to get PSF and deconvolve
     [vol_in,beadParam_all{ImgSeqNum}] = funPreprocLocalizeAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
     %find interger centriods
-    [x{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
+    [x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
     %Use radial center-finding from TPT to get subpixel estimates based on the integer centroid locations
-    x{1}{ImgSeqNum} = radialcenter3dvec(double(currImg2),x{1}{ImgSeqNum},beadParam_all{ImgSeqNum});
-    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
+    x_sub{1}{ImgSeqNum} = radialcenter3dvec(double(currImg2),x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum});
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
     
 end
 
@@ -80,14 +80,20 @@ end
 
 
 % Add MPTPara.gridxyzROIRange left-bottom corner point coordinates
-x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + [MPTPara.gridxyzROIRange.gridx(1)+MPTPara.xRange(1)-1*MPTPara.axesScale(1), ...
-                                     MPTPara.gridxyzROIRange.gridy(1)+MPTPara.yRange(1)-1*MPTPara.axesScale(2), ...
-                                     MPTPara.gridxyzROIRange.gridz(1)+MPTPara.depthRange(1)-1*MPTPara.axesScale(3)];
+x{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum} + ...
+    [MPTPara.gridxyzROIRange.gridx(1)*MPTPara.axesScale(1)+MPTPara.xRange(1)-1*MPTPara.axesScale(1), ...
+    MPTPara.gridxyzROIRange.gridy(1)*MPTPara.axesScale(2)+MPTPara.yRange(1)-1*MPTPara.axesScale(2), ...
+    MPTPara.gridxyzROIRange.gridz(1)*MPTPara.axesScale(3)+MPTPara.depthRange(1)-1*MPTPara.axesScale(3)];
 parCoordB = x{1}{ImgSeqNum};
 
 % Remove bad coordinates that are out of image ROI
-for tempi=1:3, parCoordB( parCoordB(:,tempi) > size(ImgDef,tempi)*MPTPara.axesScale(tempi), : ) = []; end
-for tempi=1:3, parCoordB( parCoordB(:,tempi) < 1*MPTPara.axesScale(tempi), : ) = []; end
+%%%%% Remove parCoord outside the image area %%%%%
+parCoordB( parCoordB(:,1) > MPTPara.xRange(2),:) = [];
+parCoordB( parCoordB(:,2) > MPTPara.yRange(2),:) = [];
+parCoordB( parCoordB(:,3) > MPTPara.depthRange(2),:) = [];
+parCoordB( parCoordB(:,1) < MPTPara.xRange(1),:) = [];
+parCoordB( parCoordB(:,2) < MPTPara.yRange(1),:) = [];
+parCoordB( parCoordB(:,3) < MPTPara.depthRange(1),:) = [];
 
 %%%%% Plot detected particles %%%%%
 % close all;
