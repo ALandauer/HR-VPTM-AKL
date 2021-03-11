@@ -191,7 +191,7 @@ BeadPara.color = 'white';       % By default
 
 %%%%% Trial-MPT Parameter %%%%%
 MPTPara.f_o_s = 60;              % Size of search field: max(|u|,|v|,|w|)
-MPTPara.n_neighborsMax = 25;     % Max # of neighboring particles
+MPTPara.n_neighborsMax = 15;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
 MPTPara.smoothness = 1e-1;       % Coefficient of regularization
