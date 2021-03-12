@@ -53,15 +53,16 @@ elseif BeadPara.detectionMethod == 3
     BeadPara.deconvThresh = 0.05;
     BeadPara.deconvPrefilter = true; %true/false gaussian prefilter option
     BeadPara.deconvIter = 5;
-    BeadPara.psfSize = [40,40]; %x,y size of bead-based psf
-    BeadPara.winSize = [15, 15, 15];
+    BeadPara.psfSize = [50,50]; %x,y size of bead-based psf
+    BeadPara.winSize = [51, 51, 51];
     BeadPara.ratThresh = 0.20;
-    BeadPara.circThresh = 1.0;
+    BeadPara.circThresh = 1.2;
     BeadPara.smoothFac = 0.15;
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
     if ImgSeqNum > 1
         beadParam_all{ImgSeqNum}.minSize = beadParam_all{1}.minSize;
         beadParam_all{ImgSeqNum}.maxSize = beadParam_all{1}.maxSize;
+        beadParam_all{ImgSeqNum}.thres = beadParam_all{1}.thres;
     end
     
     vol_in = double(currImg2)/max(double(currImg2(:)));

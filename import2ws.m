@@ -14,6 +14,7 @@ addpath('utils/external/');
 
 %Trial-MPT specific
 addpath('utils/external/Scatter2Grid3D/');
+addpath('utils/external/TPT');
 addpath('utils/MPT_src/');
 
 %oLaF specific

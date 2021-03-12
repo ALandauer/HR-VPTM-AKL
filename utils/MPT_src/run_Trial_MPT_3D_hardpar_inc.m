@@ -102,10 +102,10 @@ elseif BeadPara.detectionMethod == 3
     BeadPara.deconvThresh = 0.05;
     BeadPara.deconvPrefilter = true; %true/false gaussian prefilter option
     BeadPara.deconvIter = 5;
-    BeadPara.psfSize = [15,15]; %x,y size of bead-based psf
-    BeadPara.winSize = [7, 7, 7];
+    BeadPara.psfSize = [50,50]; %x,y size of bead-based psf
+    BeadPara.winSize = [51, 51, 51];
     BeadPara.ratThresh = 0.20;
-    BeadPara.circThresh = 1.0;
+    BeadPara.circThresh = 1.2;
     BeadPara.smoothFac = 0.15;
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
     

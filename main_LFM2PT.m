@@ -179,10 +179,10 @@ fileTrialMPTPath = cur_dir;
 %%%%% Particle detection parameters %%%%%
 % Bead parameter setup
 BeadPara.thres = 0.5;           % Threshold for detecting particles
-BeadPara.beadSize = 3;          % Estimated radius of a single particle
-BeadPara.minSize = 4;           % Minimum num of voxels of a single particle
-BeadPara.maxSize = 100;         % Maximum num of voxels of a single particle
-BeadPara.winSize = [5,5,5];     % By default
+BeadPara.beadSize = 20;          % Estimated radius of a single particle
+BeadPara.minSize = 1000;           % Minimum num of voxels of a single particle
+BeadPara.maxSize = 10000;         % Maximum num of voxels of a single particle
+BeadPara.winSize = [50,50,50];     % By default
 BeadPara.dccd = [1,1,1];        % By default
 BeadPara.abc = [1,1,1];         % By default
 BeadPara.forloop = 1;           % By default
@@ -202,14 +202,14 @@ MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
 MPTPara.smoothness = 1e-1;       % Coefficient of regularization
 MPTPara.outlrThres = 0;          % Threshold for removing outliers in MPT
-MPTPara.maxIterNum = 5;         % Max ADMM iteration number
+MPTPara.maxIterNum = 8;         % Max ADMM iteration number
 MPTPara.iterStopThres = 1e-3;    % ADMM iteration stopping threshold
 MPTPara.strain_n_neighbors = 8; % # of neighboring particles used in strain gauge
 MPTPara.strain_f_o_s = Inf;       % Size of virtual strain gauge
-MPTPara.usePrevResults = 1;      % Whether use previous results or not: 0-no; 1-yes;
+MPTPara.usePrevResults = 0;      % Whether use previous results or not: 0-no; 1-yes;
 
 %%%% Postprocessing: merge trajectory segments %%%%%
-distThres = 5; % distance threshold to connect split trajectory segments
+distThres = 4; % distance threshold to connect split trajectory segments
 extrapMethod = 'pchip';  % extrapolation scheme to connect split trajectory segments
                          % suggestion: 'nearest' for Brownian motion
 minTrajSegLength = 10;    % the minimum length of trajectory segment that will be extrapolate

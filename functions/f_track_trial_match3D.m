@@ -157,7 +157,7 @@ while iterNum < maxIterNum
             tptParam.knnFM = 5;
             tptParam.maxIter = 16;
             tptParam.outlrThres = 5;
-            tptParam.knnFD = 16;
+            tptParam.knnFD = 12;
             tptParam.fmThres = 2;
             tptParam.nSpheres = 2;
             tptParam.sizeI = ImgSize;
