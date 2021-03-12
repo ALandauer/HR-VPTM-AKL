@@ -91,6 +91,8 @@ for tempi = 1:floor(length(varargin)/2)
             uvw_B2A_prev = varargin{2*tempi};
         case lower('ImgSeqNum') % ### Only used in cumulative mode and using previous results
             ImgSeqNum = varargin{2*tempi};
+        case lower('ImgSize') % ### Only used in cumulative mode and using previous results
+            ImgSize = varargin{2*tempi};
         case lower('BeadParaDistMissing')
             BeadParaDistMissing = varargin{2*tempi};
         otherwise
@@ -117,6 +119,16 @@ if ImgSeqNum>2 && usePrevResults
     [tempu,tempv,tempw] = funInitGuess3(parCoordB_prev,uvw_B2A_prev,parCoordBCurr,ImgSeqNum);
     u_B2A_curr_refB = u_B2A_curr_refB + [tempu,tempv,tempw];
     parCoordBCurr = parCoordBCurr + [tempu,tempv,tempw];
+    
+    predictor.flag = true;
+    predictor.x0 = [parCoordBCurr];
+    predictor.u = [u_B2A_curr_refB];
+    
+else
+    predictor.flag = false;
+    predictor.x0 = [];
+    predictor.u = [];
+    
 end
 
 
@@ -135,11 +147,28 @@ while iterNum < maxIterNum
     matches_A2B = [];
     while isempty(matches_A2B) && n_neighborsMax < length(parNotMissingIndA)
         
-        if n_neighbors > 4
-            matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors );
-            % matches_A2B = f_track_hist_match( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp );
+        if n_neighbors > 5
+            %             try
+            %                 matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors );
+            %                 % matches_A2B = f_track_hist_match( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp );
+            %             catch
+           
+            %track with TPT using default options
+            tptParam.knnFM = 5;
+            tptParam.maxIter = 16;
+            tptParam.outlrThres = 5;
+            tptParam.knnFD = 16;
+            tptParam.fmThres = 2;
+            tptParam.nSpheres = 2;
+            tptParam.sizeI = ImgSize;
+            matches_A2B_ = TPT(parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:),tptParam, predictor);
+            matches_A2B = [[1:length(matches_A2B_)]',matches_A2B_];
             
-%             track = TPT(parCoordA,parCoordBCurr,tptParam{1},predictor);
+            %discard untrack particles
+            matches_A2B(matches_A2B(:,2) == 0,:) = [];
+            
+            disp('check')
+            %             end
             
         else
             matches_A2B = f_track_nearest_neighbour3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );

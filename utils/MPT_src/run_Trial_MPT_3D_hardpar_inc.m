@@ -30,7 +30,7 @@
 %%%%% Load 3D volumetric images %%%%%
 try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
 
-ImgSeqNum=1; [file_namess,Img] = funReadImage3([data_folder,data_subfolder,fileNamePrefix,'.mat'],ImgSeqNum); % Load image
+ImgSeqNum=1; [file_names,Img] = funReadImage3([data_folder,data_subfolder,fileNamePrefix,'.mat'],ImgSeqNum); % Load image
 
 try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
 
@@ -146,8 +146,9 @@ title('Detected particles in ref image','fontweight','normal');
 disp(['Detected particle # in ref image: ',num2str(size(parCoordA,1))]);
 disp('%%%%%% Detect particles: Done! %%%%%%'); fprintf('\n');
  
-
-
+if ImgSeqNum == 6
+    disp('end')
+end
 %% %%%%% Initialization %%%%%
 %%%%% MPT Parameter %%%%%
 % MPTPara.f_o_s = 60;              % Size of search field: max(|u|,|v|,|w|)
@@ -164,12 +165,12 @@ disp('%%%%%% Detect particles: Done! %%%%%%'); fprintf('\n');
 
 
 %%%%%% To store results %%%%%
-parCoord_prev = cell(length(file_namess)-1,1);  parCoord_prev{1} = parCoordA;
+parCoord_prev = cell(length(file_names)-1,1);  parCoord_prev{1} = parCoordA;
 track_A2B_prev = cell(length(file_names)-1,1); track_B2A_prev = cell(length(file_names)-1,1);
 uvw_B2A_prev = cell(length(file_names)-1,1);
 
  
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     
     disp(['====== Frame #',num2str(ImgSeqNum),' ======']);
@@ -197,7 +198,7 @@ end
 %%%%% Incremental tracking ratio %%%%%
 disp('%%%%% Calculate incremental tracking ratio %%%%%'); fprintf('\n');
 track_ratio = zeros(length(file_names)-1,1);
-DefType = 'exp'; defList = [2:1:length(file_names)]';
+defList = [2:1:length(file_names)]';
   
 for ImgSeqNum = 2 : length(file_names)
     track_A2B = track_A2B_prev{ImgSeqNum-1}; 

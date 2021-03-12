@@ -28,7 +28,7 @@ sizex1idx = size(x1idx);
 x10idx = uMatch(x1idx(:));
 x10idx = reshape(x10idx,sizex1idx);
 
-matchP = knnfM/2;;
+matchP = knnfM/2;
 % Compare condition of match
 ggMatch = zeros(size(match));
 for i = 1:length(x0)

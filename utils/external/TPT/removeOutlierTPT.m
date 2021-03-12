@@ -1,4 +1,4 @@
-function [track] = removeOutlierPSPT(varargin)
+function [track] = removeOutlierTPT(varargin)
 % [track] = removeOutlierPSPT(varargin) Find Outliers in scattered Data 
 % based on residual method by:
 %

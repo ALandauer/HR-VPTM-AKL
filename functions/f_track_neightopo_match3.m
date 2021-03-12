@@ -120,7 +120,7 @@ if waitbarOrNot==1
 end
 clear matched_par;
   
-parfor parInd = 1:size(part_A,1) % For each particle in part_A
+for parInd = 1:size(part_A,1) % For each particle in part_A
     
     % if waitbarOrNot==1
     %    hbar.iterate(1);
@@ -158,25 +158,25 @@ parfor parInd = 1:size(part_A,1) % For each particle in part_A
         %%%%%% All three features (r,phi,theta) reach minimum %%%%%
         if (ind_min_corr_r==ind_min_corr_phi) && (ind_min_corr_phi==ind_min_corr_theta)
              
-% %             % discard displacements should be smaller than the field of search
-% %             if sqrt( sum( ( part_A(parInd,:) - part_B(neighborInd_InBNearA(ind_min_corr_r),:) ).^2 ) ) < f_o_s
-% %                 matched_par{parInd} = [parInd, neighborInd_InBNearA(ind_min_corr_r)]; % save matches
-% %             end
+            % discard displacements should be smaller than the field of search
+            if sqrt( sum( ( part_A(parInd,:) - part_B(neighborInd_InBNearA(ind_min_corr_r),:) ).^2 ) ) < f_o_s
+                matched_par{parInd} = [parInd, neighborInd_InBNearA(ind_min_corr_r)]; % save matches
+            end
             
             %%%% Here I comment sometimes there can be a relaxed criterion %%%%% 
             %%%%% Two of the three features reach minimum %%%%%
-                if (ind_min_corr_r==ind_min_corr_phi)
-            
-                    % if .. < f_o_s % discard displacements larger field of search
-                    matched_par{parInd} = [parInd, neighborInd_AB(ind_min_corr_r)]; % save matches
-            
-                elseif (ind_min_corr_phi==ind_min_corr_theta)
-                    matched_par{parInd} = [parInd, neighborInd_AB(ind_min_corr_phi)]; % save matches
-            
-                elseif (ind_min_corr_r==ind_min_corr_theta)
-                    matched_par{parInd} = [parInd, neighborInd_AB(ind_min_corr_r)]; % save matches
-            
-                end
+% % %                 if (ind_min_corr_r==ind_min_corr_phi)
+% % %             
+% % %                     % if .. < f_o_s % discard displacements larger field of search
+% % %                     matched_par{parInd} = [parInd, neighborInd_AB(ind_min_corr_r)]; % save matches
+% % %             
+% % %                 elseif (ind_min_corr_phi==ind_min_corr_theta)
+% % %                     matched_par{parInd} = [parInd, neighborInd_AB(ind_min_corr_phi)]; % save matches
+% % %             
+% % %                 elseif (ind_min_corr_r==ind_min_corr_theta)
+% % %                     matched_par{parInd} = [parInd, neighborInd_AB(ind_min_corr_r)]; % save matches
+% % %             
+% % %                 end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         end
