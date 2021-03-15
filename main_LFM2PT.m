@@ -21,8 +21,8 @@ import2ws();
 
 %% Specify data to import
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['synth_noise_floor',filesep]; %subfolder for a specific experiment
-fileNamePrefix = 'syn_*';
+data_subfolder = ['synth_noise_floor_n100',filesep]; %subfolder for a specific experiment
+fileNamePrefix = '100beads_*';
 
 %% ======================= SET-UP SECTION ============================
 

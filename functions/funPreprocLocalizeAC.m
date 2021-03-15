@@ -44,7 +44,7 @@ psf = psf_in/max(psf_in(:));
 psf(psf<deconv_thresh) = 0;
 
 %%%%%%%%%%%%%for testing
-psf = imnoise(psf);
+% psf = imnoise(psf);
 
 %Do the deconvolution
 disp('%%%%%% Starting deconvolution %%%%%%')

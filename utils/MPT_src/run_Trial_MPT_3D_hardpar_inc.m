@@ -145,10 +145,7 @@ title('Detected particles in ref image','fontweight','normal');
 %%%%% Report detected beads # %%%%%
 disp(['Detected particle # in ref image: ',num2str(size(parCoordA,1))]);
 disp('%%%%%% Detect particles: Done! %%%%%%'); fprintf('\n');
- 
-if ImgSeqNum == 6
-    disp('end')
-end
+
 %% %%%%% Initialization %%%%%
 %%%%% MPT Parameter %%%%%
 % MPTPara.f_o_s = 60;              % Size of search field: max(|u|,|v|,|w|)
@@ -592,7 +589,7 @@ for ii = 1:length(disp_A2BCum)
     N = length(disp_meas_z);
     
     disp_imps_y = zeros(N,1);
-    disp_imps_x = 11*ones(N,1);
+    disp_imps_x = 0*11*ones(N,1);
     disp_imps_z = zeros(N,1);
     
     RMSD_y(ii,1) = sqrt(sum((disp_meas_y - disp_imps_y).^2)/N);
@@ -601,21 +598,22 @@ for ii = 1:length(disp_A2BCum)
 end
 
 
-imps_disp_x = 11*[1:length(mean_cum_disp)]';
+% imps_disp_x = 11*[1:length(mean_cum_disp)]';
+imps_disp_x = [0.022,0.025,0.028,0.033,0.040,0.050,0.066,0.100,0.200];
 figure
 subplot(1,3,1)
 shadedErrorBar(imps_disp_x,mean_cum_disp(:,2),RMSD_x)
-xlabel('Imposed displacement in x, um')
+xlabel('Noise level')
 ylabel('Measured displacement in x, um')
 
 subplot(1,3,2)
 shadedErrorBar(imps_disp_x,mean_cum_disp(:,1),RMSD_y)
-xlabel('Imposed displacement in x, um')
+xlabel('Noise level')
 ylabel('Measured displacement in y, um')
 
 subplot(1,3,3)
 shadedErrorBar(imps_disp_x,mean_cum_disp(:,3),RMSD_z)
-xlabel('Imposed displacement in x, um')
+xlabel('Noise level')
 ylabel('Measured displacement in z, um')
 
 %%
