@@ -184,7 +184,7 @@ for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
 
     %%%%% Trial_MPT_tracking %%%%%
-    [parCoordB_temp,uvw_B2A_temp,~,~,track_A2B_temp,track_B2A_temp] = fun_TrialMPT_3D_HardPar( ...
+    [parCoordB_temp,uvw_B2A_temp,~,~,track_A2B_temp,track_B2A_temp,beadParam_all] = fun_TrialMPT_3D_HardPar( ...
        ImgSeqNum,Img{2},BeadPara,beadParam_all,MPTPara,parCoord_prev{ImgSeqNum-1},parCoord_prev(2:end),uvw_B2A_prev);
      
     %%%%% Store results %%%%%
