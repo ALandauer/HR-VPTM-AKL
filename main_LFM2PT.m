@@ -21,15 +21,15 @@ import2ws();
 
 %% Specify data to import
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['synth_noise_floor_n100',filesep]; %subfolder for a specific experiment
-fileNamePrefix = '100beads_*';
+data_subfolder = ['dx_singleLayer_11um',filesep]; %subfolder for a specific experiment
+fileNamePrefix = 'dx_*';
 
 %% ======================= SET-UP SECTION ============================
 
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-450, 450];
+depthRange = [-250, 250];
 % axial slice step (in um)
 depthStep = 5;
 
@@ -178,6 +178,7 @@ fileTrialMPTPath = cur_dir;
 
 %%%%% Particle detection parameters %%%%%
 % Bead parameter setup
+BeadPara.deconvIter = 5;           % Threshold for detecting particles
 BeadPara.thres = 0.5;           % Threshold for detecting particles
 BeadPara.beadSize = 20;          % Estimated radius of a single particle
 BeadPara.minSize = 1000;           % Minimum num of voxels of a single particle
@@ -190,7 +191,7 @@ BeadPara.randNoise = 1e-7;      % By default
 BeadPara.numBeadsPSF = 1;
 BeadPara.fileFolder = fileFolder; %folder for raw images
 BeadPara.PSF = [];              % PSF function; Example: PSF = fspecial('disk', BeadPara.beadSize-1 ); % Disk blur
-BeadPara.distMissing = 5;       % Distance threshold to check whether particle has a match or not 
+BeadPara.distMissing = 15;       % Distance threshold to check whether particle has a match or not 
 BeadPara.color = 'white';       % By default
 
 % Trial-MPT tracking
@@ -199,7 +200,7 @@ BeadPara.color = 'white';       % By default
 MPTPara.f_o_s = Inf;              % Size of search field: max(|u|,|v|,|w|)
 MPTPara.n_neighborsMax = 8;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
-MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
+MPTPara.gbSolver = 3;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
 MPTPara.smoothness = 1e-1;       % Coefficient of regularization
 MPTPara.outlrThres = 0;          % Threshold for removing outliers in MPT
 MPTPara.maxIterNum = 8;         % Max ADMM iteration number
@@ -209,11 +210,11 @@ MPTPara.strain_f_o_s = Inf;       % Size of virtual strain gauge
 MPTPara.usePrevResults = 0;      % Whether use previous results or not: 0-no; 1-yes;
 
 %%%% Postprocessing: merge trajectory segments %%%%%
-distThres = 4; % distance threshold to connect split trajectory segments
+distThres = 18; % distance threshold to connect split trajectory segments
 extrapMethod = 'pchip';  % extrapolation scheme to connect split trajectory segments
                          % suggestion: 'nearest' for Brownian motion
-minTrajSegLength = 10;    % the minimum length of trajectory segment that will be extrapolate
-maxGapTrajSeqLength = 0; % the max frame# gap between connected trajectory segments
+minTrajSegLength = 5;    % the minimum length of trajectory segment that will be extrapolate
+maxGapTrajSeqLength = 1; % the max frame# gap between connected trajectory segments
 
 %%%%% Run Trial-MPT tracking %%%%%
 if strcmpi(MPTPara.mode,'inc')

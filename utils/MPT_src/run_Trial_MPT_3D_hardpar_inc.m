@@ -101,7 +101,6 @@ elseif BeadPara.detectionMethod == 3
     %method specific beadPara entries
     BeadPara.deconvThresh = 0.05;
     BeadPara.deconvPrefilter = true; %true/false gaussian prefilter option
-    BeadPara.deconvIter = 5;
     BeadPara.psfSize = [50,50]; %x,y size of bead-based psf
     BeadPara.winSize = [51, 51, 51];
     BeadPara.ratThresh = 0.20;
