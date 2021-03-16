@@ -110,6 +110,11 @@ elseif BeadPara.detectionMethod == 3
     BeadPara.circThresh = 1.0;
     BeadPara.smoothFac = 0.15;
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    if ImgSeqNum > 1
+        beadParam_all{ImgSeqNum}.minSize = beadParam_all{1}.minSize;
+        beadParam_all{ImgSeqNum}.maxSize = beadParam_all{1}.maxSize;
+        beadParam_all{ImgSeqNum}.thres = beadParam_all{1}.thres;
+    end
     
     vol_in = double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:)));
     

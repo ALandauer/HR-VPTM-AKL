@@ -107,6 +107,11 @@ elseif BeadPara.detectionMethod == 3
     BeadPara.circThresh = 1.2;
     BeadPara.smoothFac = 0.15;
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    if ImgSeqNum > 1
+        beadParam_all{ImgSeqNum}.minSize = beadParam_all{1}.minSize;
+        beadParam_all{ImgSeqNum}.maxSize = beadParam_all{1}.maxSize;
+        beadParam_all{ImgSeqNum}.thres = beadParam_all{1}.thres;
+    end
     
     vol_in = double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:)));
     
@@ -588,7 +593,7 @@ for ii = 1:length(disp_A2BCum)
     N = length(disp_meas_z);
     
     disp_imps_y = zeros(N,1);
-    disp_imps_x = 0*11*ones(N,1);
+    disp_imps_x = ii*11*ones(N,1);
     disp_imps_z = zeros(N,1);
     
     RMSD_y(ii,1) = sqrt(sum((disp_meas_y - disp_imps_y).^2)/N);
@@ -597,8 +602,8 @@ for ii = 1:length(disp_A2BCum)
 end
 
 
-% imps_disp_x = 11*[1:length(mean_cum_disp)]';
-imps_disp_x = [0.022,0.025,0.028,0.033,0.040,0.050,0.066,0.100,0.200];
+imps_disp_x = 11*[1:length(mean_cum_disp)]';
+% imps_disp_x = [0.022,0.025,0.028,0.033,0.040,0.050,0.066,0.100,0.200];
 figure
 subplot(1,3,1)
 shadedErrorBar(imps_disp_x,mean_cum_disp(:,2),RMSD_x)
