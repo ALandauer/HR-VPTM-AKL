@@ -1,5 +1,5 @@
 % %%%%%%%%%%%%%%%%%% Trial-MPT (3D incremental mode) %%%%%%%%%%%%%%%%%
-% Main file of code "Topology-based rotation-invariant augmented Lagrangian 
+% Main file of code "Topology-based rotation-invariant augmented Lagrangian
 % multiple particle tracking (Trial-MPT)"
 % ***********************************************
 % Dimension: 3D
@@ -26,7 +26,7 @@
 % Date: 2020.12.
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% 
+%%
 %%%%% Load 3D volumetric images %%%%%
 try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
 
@@ -47,15 +47,15 @@ disp('%%%%%% Load reference image: Done! %%%%%%'); fprintf('\n');
 
 %%%%% Load image mask file %%%%%
 try load(im_roi_mask_file_path); catch; end
-try 
+try
     MPTPara.ImgRefMask = im_roi'; % Load stored image roi if existed
-catch 
+catch
     disp('No mask, using whole image...')
     MPTPara.ImgRefMask = ones(size(Img{1})); % Set up default image mask file
 end
 disp('%%%%%% Load image mask file: Done! %%%%%%'); fprintf('\n');
-  
-   
+
+
 %% ====== Detect particles ======
 %%%%% Particle detection parameters %%%%%
 %%%%% Bead Parameter %%%%%
@@ -69,33 +69,33 @@ disp('%%%%%% Load image mask file: Done! %%%%%%'); fprintf('\n');
 % BeadPara.forloop = 1;           % By default
 % BeadPara.randNoise = 1e-7;      % By default
 % BeadPara.PSF = [];              % PSF function; Example: PSF = fspecial('disk', BeadPara.beadSize-1 ); % Disk blur
-% BeadPara.distMissing = 5;       % Distance threshold to check whether particle has a match or not 
-% BeadPara.color = 'white';       % By default 
- 
+% BeadPara.distMissing = 5;       % Distance threshold to check whether particle has a match or not
+% BeadPara.color = 'white';       % By default
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ImgSeqNum = 1; % First reference image
-   
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Several methods to detect particles %%%%%
-try 
+try
     BeadPara.detectionMethod = BeadPara.detectionMethod;
 catch
     BeadPara.detectionMethod = 2;
 end
 %%%%% Method 1: TPT code %%%%%
-if BeadPara.detectionMethod == 1 
+if BeadPara.detectionMethod == 1
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
     x_px{1}{ImgSeqNum} = locateParticles(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum}); % Detect particles
     x_sub{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}); % Localize particles
     x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
-% ----------------------------
-%%%%% Method 2: Modified TracTrac code %%%%%
+    % ----------------------------
+    %%%%% Method 2: Modified TracTrac code %%%%%
 elseif BeadPara.detectionMethod == 2
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
     x_sub{1}{ImgSeqNum} = f_detect_particles3(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum});
     x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
     
-%%%%% Method 3: Deconv + Active contour code, better for large beads that need bespoke deconv %%%%%
+    %%%%% Method 3: Deconv + Active contour code, better for large beads that need bespoke deconv %%%%%
 elseif BeadPara.detectionMethod == 3
     
     %method specific beadPara entries
@@ -140,12 +140,12 @@ parCoordA( parCoordA(:,3) > MPTPara.depthRange(2),:) = [];
 parCoordA( parCoordA(:,1) < MPTPara.xRange(1),:) = [];
 parCoordA( parCoordA(:,2) < MPTPara.yRange(1),:) = [];
 parCoordA( parCoordA(:,3) < MPTPara.depthRange(1),:) = [];
- 
+
 %%%%% Plot %%%%%
 figure, plot3(parCoordA(:,1),parCoordA(:,2),parCoordA(:,3),'bo');
-view(3); box on; axis equal; axis tight; set(gca,'fontsize',18); 
+view(3); box on; axis equal; axis tight; set(gca,'fontsize',18);
 title('Detected particles in ref image','fontweight','normal');
- 
+
 %%%%% Report detected beads # %%%%%
 disp(['Detected particle # in ref image: ',num2str(size(parCoordA,1))]);
 disp('%%%%%% Detect particles: Done! %%%%%%'); fprintf('\n');
@@ -170,7 +170,7 @@ parCoord_prev = cell(length(file_names)-1,1);  parCoord_prev{1} = parCoordA;
 track_A2B_prev = cell(length(file_names)-1,1); track_B2A_prev = cell(length(file_names)-1,1);
 uvw_B2A_prev = cell(length(file_names)-1,1);
 
- 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     
@@ -178,15 +178,15 @@ for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     
     %%%%% Load image volumetric data %%%%%
     try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
-    tempvol = load(file_names{ImgSeqNum}); fieldName = fieldnames(tempvol);
-    Img{2} = getfield(tempvol,fieldName{2}); clear tempvol; %#ok<GFLD>
+    tempvol = load(file_names{ImgSeqNum}); fieldName = 'reconVolume';
+    Img{2} = getfield(tempvol,fieldName); clear tempvol; %#ok<GFLD>
     if iscell(Img{2}), Img{2}=Img{2}{1}; end
     try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
-
+    
     %%%%% Trial_MPT_tracking %%%%%
     [parCoordB_temp,uvw_B2A_temp,~,~,track_A2B_temp,track_B2A_temp,beadParam_all] = fun_TrialMPT_3D_HardPar( ...
-       ImgSeqNum,Img{2},BeadPara,beadParam_all,MPTPara,parCoord_prev{ImgSeqNum-1},parCoord_prev(2:end),uvw_B2A_prev);
-     
+        ImgSeqNum,Img{2},BeadPara,beadParam_all,MPTPara,parCoord_prev{ImgSeqNum-1},parCoord_prev(2:end),uvw_B2A_prev);
+    
     %%%%% Store results %%%%%
     parCoord_prev{ImgSeqNum} = parCoordB_temp;
     uvw_B2A_prev{ImgSeqNum-1} = uvw_B2A_temp; % incremental displacement
@@ -194,18 +194,18 @@ for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     track_B2A_prev{ImgSeqNum-1} = track_B2A_temp;
     
 end
-  
+
 
 %%%%% Incremental tracking ratio %%%%%
 disp('%%%%% Calculate incremental tracking ratio %%%%%'); fprintf('\n');
 track_ratio = zeros(length(file_names)-1,1);
 defList = [2:1:length(file_names)]';
-  
+
 for ImgSeqNum = 2 : length(file_names)
-    track_A2B = track_A2B_prev{ImgSeqNum-1}; 
-    track_ratio(ImgSeqNum-1) = length(track_A2B(track_A2B>0))/size(parCoord_prev{ImgSeqNum},1);      
+    track_A2B = track_A2B_prev{ImgSeqNum-1};
+    track_ratio(ImgSeqNum-1) = length(track_A2B(track_A2B>0))/size(parCoord_prev{ImgSeqNum},1);
 end
- 
+
 fig=figure; ax=axes; hold on; plot(defList,track_ratio,'r^-.','linewidth',1);
 adjust_fig(fig,ax,'','',''); box on; title('');
 xlabel('Frame #'); ylabel('Tracking ratio');
@@ -215,12 +215,12 @@ axis([2,length(file_names),0,1]);
 disp('%%%%%% Trial-MPT 3D hard particle tracking: Done! %%%%%%'); fprintf('\n');
 results_file_names = 'results_3D_hardpar.mat';
 save(results_file_names,'parCoord_prev','uvw_B2A_prev','track_A2B_prev','track_B2A_prev');
- 
+
 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Postprocessing
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% Visualize tracked incremental displacement of each frame %%%%%
 disp('%%%%% Plot tracked incremental deformations %%%%%'); fprintf('\n');
@@ -229,8 +229,8 @@ disp('%%%%% Plot tracked incremental deformations %%%%%'); fprintf('\n');
 %already handled in localization
 %try axes_scale = MPTPara.xstep; catch, axes_scale = [1,1,1]; end % unit: um/px
 axes_scale = [1,1,1];
-try tstep = MPTPara.tstep; catch, tstep = 1; end % unit: us  
- 
+try tstep = MPTPara.tstep; catch, tstep = 1; end % unit: us
+
 %%%%% Plot tracked incremental displacement field %%%%%
 %%%%% Make a video %%%%%
 v = VideoWriter('video_3D_inc.avi'); v.FrameRate = 5; open(v); figure,
@@ -240,7 +240,7 @@ for ImgSeqNum = 2:length(file_names) % ImgSeqNum: Frame #
     % Displacement from tracked particles on deformed frame
     disp_A2B_parCoordB = -uvw_B2A_prev{ImgSeqNum-1};
     parCoordB = parCoord_prev{ImgSeqNum};
-
+    
     %%%%% Plot displacements %%%%%
     clf, plotCone3(parCoordB(:,1)*axes_scale(1), parCoordB(:,2)*axes_scale(3), parCoordB(:,3)*axes_scale(3), ...
         disp_A2B_parCoordB(:,1)*axes_scale(1)/tstep, disp_A2B_parCoordB(:,2)*axes_scale(2)/tstep, disp_A2B_parCoordB(:,3)*axes_scale(3)/tstep );
@@ -326,14 +326,14 @@ for tempk = 1 : size(parCoord_prev,1)  % Find trajectories passing through parti
             parCoordTraj{trajInd} = wayPoints;
         end
     end
-      
+    
 end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% %%%%% Merge trajectory segments %%%%%
 % Find the starting point and length of each trajectory segment
-% parCoordTrajPara has size [xxx, 2], and each row is 
+% parCoordTrajPara has size [xxx, 2], and each row is
 % parCoordTrajPara(xxx, 1:2) = [first non-NAN position, trajectory segment length]
 parCoordTrajPara = []; parCoordTraj = parCoordTraj(:);
 for tempi = 1 : size(parCoordTraj,1)
@@ -352,15 +352,15 @@ for tempMergeTime = 1:4 % Try to merge four times
             
             [row,col] = find( parCoordTrajPara(:,2)==tempk ); % Find trajectory segments whose "length==tempk"
             [row1,~] = find( parCoordTrajPara(:,2)<size(parCoord_prev,1)+1-tempk & parCoordTrajPara(:,2)>0 ); % Find trajectory setments with length requirement
-             
+            
             for tempi = 1:length(row) % For each trajectory segment whose "length==tempk"
-                 
+                
                 tempWatibar = tempi/length(row)/4/(maxGapTrajSeqLength+1)/((size(parCoord_prev,1)-1)-minTrajSegLength+1) + ...
                     ((size(parCoord_prev,1)-1)-tempk+1)/4/(maxGapTrajSeqLength+1)/((size(parCoord_prev,1)-1)-minTrajSegLength+1) + ...
                     (tempm)/4/(maxGapTrajSeqLength+1) + (tempMergeTime-1)/4;
                 
                 waitbar(tempWatibar);
-                 
+                
                 parCoordTrajMat = cell2mat( parCoordTraj );
                 parCoordTrajCurr = parCoordTraj{row(tempi)}; % For each trajectory segment whose "length==tempk"
                 parCoordTrajCurrPred_x = fillmissing(parCoordTrajCurr(:,1),extrapMethod); % fill missing using 'pchip' method
@@ -380,8 +380,8 @@ for tempMergeTime = 1:4 % Try to merge four times
                     % hold on; plot3(temp2(:,1),temp2(:,2),temp2(:,2),'.'); pause;
                     
                     temp3 = sqrt((temp2(:,1)-parCoordTrajCurrPred_x( sum(parCoordTrajPara(row(tempi),1:2))+tempm )).^2 + ...
-                                (temp2(:,2)-parCoordTrajCurrPred_y( sum(parCoordTrajPara(row(tempi),1:2))+tempm )).^2 + ...
-                                (temp2(:,3)-parCoordTrajCurrPred_z( sum(parCoordTrajPara(row(tempi),1:2))+tempm )).^2 );
+                        (temp2(:,2)-parCoordTrajCurrPred_y( sum(parCoordTrajPara(row(tempi),1:2))+tempm )).^2 + ...
+                        (temp2(:,3)-parCoordTrajCurrPred_z( sum(parCoordTrajPara(row(tempi),1:2))+tempm )).^2 );
                     
                     [temp3min,temp3minind] = min(temp3);
                     if temp3min < distThres % Find the continuing trajectory segment %JY!!!! threshold distance 3
@@ -419,11 +419,11 @@ for tempMergeTime = 1:4 % Try to merge four times
                     
                     % hold on; plot(tempyy(:,1),tempyy(:,2),'.');
                     temp3 = sqrt( ( temp2(:,1)-parCoordTrajCurrPred_x( (parCoordTrajPara(row(tempi),1)-1)-tempm ) ).^2 + ...
-                                ( temp2(:,2)-parCoordTrajCurrPred_y( (parCoordTrajPara(row(tempi),1)-1)-tempm ) ).^2 + ...
-                                ( temp2(:,3)-parCoordTrajCurrPred_z( (parCoordTrajPara(row(tempi),1)-1)-tempm ) ).^2  );
+                        ( temp2(:,2)-parCoordTrajCurrPred_y( (parCoordTrajPara(row(tempi),1)-1)-tempm ) ).^2 + ...
+                        ( temp2(:,3)-parCoordTrajCurrPred_z( (parCoordTrajPara(row(tempi),1)-1)-tempm ) ).^2  );
                     
                     [temp3min,temp3minind] = min(temp3);
-                    if temp3min < distThres % Find the continuing trajectory segment  
+                    if temp3min < distThres % Find the continuing trajectory segment
                         % Merge trajectory segment
                         parCoordTraj{row(tempi)}( parCoordTrajPara(row3(temp3minind),1) : parCoordTrajPara(row3(temp3minind),1)+parCoordTrajPara(row3(temp3minind),2)-1, 1:3 ) = ...
                             parCoordTraj{row3(temp3minind)}( parCoordTrajPara(row3(temp3minind),1) : parCoordTrajPara(row3(temp3minind),1)+parCoordTrajPara(row3(temp3minind),2)-1, 1:3 );
@@ -441,7 +441,7 @@ for tempMergeTime = 1:4 % Try to merge four times
                         temp_z = fillmissing(temp(:,3),extrapMethod); % fill missing
                         parCoordTraj{row(tempi)}(parCoordTrajPara(row(tempi),1) : sum(parCoordTrajPara(row(tempi),1:2))-1, 1:3) = [temp_x, temp_y, temp_z];
                         
-                    end 
+                    end
                     
                 end
                 
@@ -474,35 +474,35 @@ for tempi = 1:size(parCoordTrajPara,1)
     
     if (length(wayPoints(isnan(wayPoints(:,1))<1,1))+1)<4
         hold on; line(axes_scale(1)*wayPoints(isnan(wayPoints(:,1))<1,1), ...
-                      axes_scale(2)*wayPoints(isnan(wayPoints(:,1))<1,2), ...
-                      axes_scale(3)*wayPoints(isnan(wayPoints(:,1))<1,3), 'linewidth', 1); view(2); % straight lines
+            axes_scale(2)*wayPoints(isnan(wayPoints(:,1))<1,2), ...
+            axes_scale(3)*wayPoints(isnan(wayPoints(:,1))<1,3), 'linewidth', 1); view(2); % straight lines
     else
         hold on; fnplt(cscvn([axes_scale.*wayPoints(isnan(wayPoints(:,1))<1,:)]'),'',1);
     end
-     
-    %%%%% Codes to plot trajectories with frame-dependent color %%%%% 
+    
+    %%%%% Codes to plot trajectories with frame-dependent color %%%%%
     % if sum(1-isnan(wayPoints(:,1)))>1  % Don't show if there is only one point on the trajectory
     %     hold on; plot3(xstep*wayPoints(:,1),xstep*wayPoints(:,2),xstep*wayPoints(:,3),'r.','markersize',5);
     % end
-    % 
+    %
     % for tempj = 1:size(parCoord_prev,1)-1
     %     hold on; line(xstep*[wayPoints(tempj,1),wayPoints(tempj+1,1)], ...
     %         xstep*[wayPoints(tempj,2),wayPoints(tempj+1,2)], ...
     %         xstep*[wayPoints(tempj,3),wayPoints(tempj+1,3)], 'linewidth',1.2, 'color', CN(tempj,:) );
     % end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
 end
- 
-set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;  
+
+set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
 title('Tracked particle trajectory','fontweight','normal');
 xlabel(''); ylabel(''); zlabel('z');
 axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
-        MPTPara.yRange(1), MPTPara.yRange(2), ...
-        MPTPara.depthRange(1), MPTPara.depthRange(2)]);
+    MPTPara.yRange(1), MPTPara.yRange(2), ...
+    MPTPara.depthRange(1), MPTPara.depthRange(2)]);
 
 
-  
+
 %%
 %%%%% Compute cumulative tracking ratio from emerged trajectories %%%%%
 disp('%%%%% Plot tracked cumulative displacements %%%%%'); fprintf('\n');
@@ -538,7 +538,7 @@ for ImgSeqNum = 2:length(file_names)
     % ----- Cone plot grid data: displecement -----
     clf; plotCone3(axes_scale(1)*parCoordBCum(:,1),axes_scale(2)*parCoordBCum(:,2),axes_scale(3)*parCoordBCum(:,3), ...
         axes_scale(1)*disp_A2BCum(:,1),axes_scale(2)*disp_A2BCum(:,2),axes_scale(3)*disp_A2BCum(:,3));
-    set(gca,'fontsize',18); view(3); box on; axis equal; axis tight; 
+    set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
     title(['Tracked cumulative disp (#',num2str(ImgSeqNum),')'],'fontweight','normal');
     xlabel('x'); ylabel('y'); zlabel('z');
     axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
@@ -564,7 +564,7 @@ for ImgSeqNum = 2:length(file_names)
     [row2,col2] = find(isnan(parCoordTrajMat(ImgSeqNum:length(file_names):end,1))==0);
     trackParCum_ind = intersect(row2,trackParCum_ind);
     trackParCum_track_ratio(ImgSeqNum-1) = length(trackParCum_ind) / size(parCoord_prev{1},1);
-   
+    
     parCoordA = parCoordTrajMat(1:length(file_names):end,1:3);
     parCoordB = parCoordTrajMat(ImgSeqNum:length(file_names):end,1:3);
     parCoordACum = parCoordA(trackParCum_ind,:);
@@ -623,7 +623,7 @@ ylabel('Measured displacement in z, um')
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('Modify codes below to plot interpolated displacements and strains on a uniform grid mesh');
-pause; 
+pause;
 
 ImgSeqNum = 2; % Frame #
 
@@ -633,7 +633,7 @@ parCoordB = parCoordTrajMat(ImgSeqNum:length(file_names):end,1:3);
 parCoordACum = parCoordA(trackParCum_ind,1:3);
 parCoordBCum = parCoordB(trackParCum_ind,1:3);
 disp_A2BCum = parCoordBCum - parCoordACum;
-  
+
 %%%%% Interpolate scatterred data to gridded data %%%%%
 sxyz = min([round(0.5*MPTPara.f_o_s),20]).*MPTPara.axesScale; % Step size for griddata
 smoothness = 1e-3; % Smoothness for regularization; "smoothness=0" means no regularization
@@ -654,24 +654,24 @@ F_Grid_refB_Vector = D_Grid*uvw_Grid_refB_Vector; % {F}={D}{U}
 
 %%%%% Cone plot grid data: displecement %%%%%
 figure, plotCone3(axes_scale(1)*x_Grid_refB,axes_scale(2)*y_Grid_refB,axes_scale(3)*z_Grid_refB,u_Grid_refB*axes_scale(1),v_Grid_refB*axes_scale(2),w_Grid_refB*axes_scale(3));
-set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;  
+set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
 title('Tracked cumulative displacement','fontweight','normal');
 axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
-        MPTPara.yRange(1), MPTPara.yRange(2), ...
-        MPTPara.depthRange(1), MPTPara.depthRange(2)]);
+    MPTPara.yRange(1), MPTPara.yRange(2), ...
+    MPTPara.depthRange(1), MPTPara.depthRange(2)]);
 
-  
+
 %%%%% Generate an FE-mesh %%%%%
 [coordinatesFEM_refB,elementsFEM_refB] = funMeshSetUp3(x_Grid_refB*axes_scale(1),y_Grid_refB*axes_scale(2),z_Grid_refB*axes_scale(3));
 
 %%%%% Cone plot grid data: displacement %%%%%
 Plotdisp_show3(uvw_Grid_refB_Vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
- 
+
 %%%%% Cone plot grid data: infinitesimal strain %%%%%
 Plotstrain_show3(F_Grid_refB_Vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor',1,tstep);
- 
 
- 
+
+
 
 
 

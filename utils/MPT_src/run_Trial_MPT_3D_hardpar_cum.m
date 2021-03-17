@@ -89,15 +89,15 @@ if BeadPara.detectionMethod == 1
     x_px{1}{ImgSeqNum} = locateParticles(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum}); % Detect particles
     x_sub{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}); % Localize particles
     x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
-% ----------------------------
+    % ----------------------------
     
-%%%%% Method 2: Modified TracTrac code, better for lower density, medium size beads %%%%%
+    %%%%% Method 2: Modified TracTrac code, better for lower density, medium size beads %%%%%
 elseif BeadPara.detectionMethod == 2
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
     x_sub{1}{ImgSeqNum} = f_detect_particles3(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum});
     x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
     
-%%%%% Method 3: Deconv + Active contour code, better for large beads that need bespoke deconv %%%%%
+    %%%%% Method 3: Deconv + Active contour code, better for large beads that need bespoke deconv %%%%%
 elseif BeadPara.detectionMethod == 3
     
     %method specific beadPara entries
@@ -184,8 +184,8 @@ for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     
     %%%%% Load image volumetric data %%%%%
     try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
-    tempvol = load(file_names{ImgSeqNum}); fieldName = fieldnames(tempvol);
-    Img{2} = getfield(tempvol,fieldName{2}); clear tempvol; %#ok<GFLD>
+    tempvol = load(file_names{ImgSeqNum}); fieldName = 'reconVolume';
+    Img{2} = getfield(tempvol,fieldName); clear tempvol; %#ok<GFLD>
     if iscell(Img{2}), Img{2}=Img{2}{1}; end
     try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
     
@@ -315,10 +315,10 @@ set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
 title('Tracked particle trajectory','fontweight','normal');
 xlabel('x'); ylabel('y'); zlabel('z');
 axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
-        MPTPara.yRange(1), MPTPara.yRange(2), ...
-        MPTPara.depthRange(1), MPTPara.depthRange(2)]);
+    MPTPara.yRange(1), MPTPara.yRange(2), ...
+    MPTPara.depthRange(1), MPTPara.depthRange(2)]);
 
-    
+
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% errors for RB motion
@@ -326,7 +326,7 @@ disp('%%%%% Compute tracked cumulative displacements %%%%%'); fprintf('\n');
 clear disp_A2BCum RMSD_*
 
 for ii = 1:length(resultDisp)
-   disp_A2BCum{ii} = resultDisp{ii}.disp_A2B_parCoordB;
+    disp_A2BCum{ii} = resultDisp{ii}.disp_A2B_parCoordB;
     
 end
 
@@ -422,8 +422,8 @@ figure, plotCone3(x_Grid_refB*axes_scale(1),y_Grid_refB*axes_scale(2),z_Grid_ref
 set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
 title('Tracked cumulative displacement','fontweight','normal');
 axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
-        MPTPara.yRange(1), MPTPara.yRange(2), ...
-        MPTPara.depthRange(1), MPTPara.depthRange(2)]);
+    MPTPara.yRange(1), MPTPara.yRange(2), ...
+    MPTPara.depthRange(1), MPTPara.depthRange(2)]);
 
 %%%%% Generate an FE-mesh %%%%%
 [coordinatesFEM_refB,elementsFEM_refB] = funMeshSetUp3(x_Grid_refB*axes_scale(1),y_Grid_refB*axes_scale(2),z_Grid_refB*axes_scale(3));

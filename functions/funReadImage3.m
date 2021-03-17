@@ -38,6 +38,11 @@ function [file_name,Img] = funReadImage3(varargin)
 % fprintf('     2: Manually select images.  \n')
 % prompt = 'Input here: ';
 % LoadImgMethod = input(prompt);
+%
+%Adapted from:
+% Bar-Kochba E., Toyjanova J., Andrews E., Kim K., Franck C. (2014) A fast 
+% iterative digital volume correlation algorithm for large deformations. 
+% Experimental Mechanics. doi: 10.1007/s11340-014-9874-2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% ---- Opening & Reading the First Image into CPU Memory ----
@@ -62,8 +67,10 @@ end
 % Supp functions
 function I = loadFile(fileInfo,idx)
 I = load(fileInfo.filename{idx});
-fieldName = fieldnames(I);
-I = getfield(I,fieldName{2});
+% fieldName = fieldnames(I);
+fieldName = 'reconVolume';
+% I = getfield(I,fieldName{3});
+I = getfield(I,fieldName);
 if iscell(I)
     if numel(I), I = I{1};
     else
