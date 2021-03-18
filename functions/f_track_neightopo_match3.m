@@ -1,4 +1,4 @@
-function [matches] = f_track_neightopo_match3( part_A, part_B, f_o_s, n_neighbors)
+function [matched_par] = f_track_neightopo_match3( part_A, part_B, f_o_s, n_neighbors)
 %FUNCTION matches = f_track_neightopo_match3(part_A,part_B,f_o_s,n_neighbors)
 % Objective: Tracking based on topology similarity
 % ---------------------------------------------------
@@ -118,9 +118,9 @@ waitbarOrNot = 0; % Waitbar to be used to check the code progres
 if waitbarOrNot==1
     hbar = parfor_progressbar(size(part_A,1),'Computing...');  % create the progress bar in parallel computing "parfor"
 end
-clear matches;
+clear matched_par;
   
-parfor parInd = 1:size(part_A,1) % For each particle in part_A
+for parInd = 1:size(part_A,1) % For each particle in part_A
     
     % if waitbarOrNot==1
     %    hbar.iterate(1);
@@ -160,24 +160,24 @@ parfor parInd = 1:size(part_A,1) % For each particle in part_A
              
             % discard displacements should be smaller than the field of search
             if sqrt( sum( ( part_A(parInd,:) - part_B(neighborInd_InBNearA(ind_min_corr_r),:) ).^2 ) ) < f_o_s
-                matches{parInd} = [parInd, neighborInd_InBNearA(ind_min_corr_r)]; % save matches
+                matched_par{parInd} = [parInd, neighborInd_InBNearA(ind_min_corr_r)]; % save matches
             end
             
-            %%%%% Here I comment sometimes there can be a relaxed criterion %%%%% 
-            %%%%%% Two of the three features reach minimum %%%%%
-            %     if (ind_min_corr_r==ind_min_corr_phi)
-            %
-            %         % if .. < f_o_s % discard displacements larger field of search
-            %         matches{parInd} = [parInd, neighborInd_AB(ind_min_corr_r)]; % save matches
-            %
-            %     elseif (ind_min_corr_phi==ind_min_corr_theta)
-            %         matches{parInd} = [parInd, neighborInd_AB(ind_min_corr_phi)]; % save matches
-            %
-            %     elseif (ind_min_corr_r==ind_min_corr_theta)
-            %         matches{parInd} = [parInd, neighborInd_AB(ind_min_corr_r)]; % save matches
-            %
-            %     end
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%% Here I comment sometimes there can be a relaxed criterion %%%%% 
+            %%%%% Two of the three features reach minimum %%%%%
+% % %                 if (ind_min_corr_r==ind_min_corr_phi)
+% % %             
+% % %                     % if .. < f_o_s % discard displacements larger field of search
+% % %                     matched_par{parInd} = [parInd, neighborInd_AB(ind_min_corr_r)]; % save matches
+% % %             
+% % %                 elseif (ind_min_corr_phi==ind_min_corr_theta)
+% % %                     matched_par{parInd} = [parInd, neighborInd_AB(ind_min_corr_phi)]; % save matches
+% % %             
+% % %                 elseif (ind_min_corr_r==ind_min_corr_theta)
+% % %                     matched_par{parInd} = [parInd, neighborInd_AB(ind_min_corr_r)]; % save matches
+% % %             
+% % %                 end
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         end
         
@@ -188,10 +188,10 @@ end
 
 
 % Check if there are found matches
-if exist('matches','var')
-    matches = cell2mat(matches');
+if exist('matched_par','var')
+    matched_par = cell2mat(matched_par');
 else
-    matches = [];
+    matched_par = [];
 end
 
 if waitbarOrNot==1, close(hbar); end % Close hbar if there was a waitbar.

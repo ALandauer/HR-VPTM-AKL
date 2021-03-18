@@ -1,5 +1,5 @@
-function [parCoordB,uvw_B2A_refB,resultDisp,resultDefGrad,track_A2B,track_B2A] = fun_TrialMPT_3D_HardPar(...
-    ImgSeqNum,ImgDef,BeadPara,MPTPara,parCoordA,parCoordB_prev,uvw_B2A_refB_prev)
+function [parCoordB,uvw_B2A_refB,resultDisp,resultDefGrad,track_A2B,track_B2A,beadParam_all] = fun_TrialMPT_3D_HardPar(...
+    ImgSeqNum,ImgDef,BeadPara,beadParam_all,MPTPara,parCoordA,parCoordB_prev,uvw_B2A_refB_prev)
  
 
 warning('off');
@@ -15,7 +15,7 @@ currImg = ImgDef(MPTPara.gridxyzROIRange.gridx(1):MPTPara.gridxyzROIRange.gridx(
                  MPTPara.gridxyzROIRange.gridz(1):MPTPara.gridxyzROIRange.gridz(2));
 
 %%%%% If PSF is non-empty, perform deconvolution %%%%%
-if ~isempty(BeadPara.PSF)
+if ~isempty(BeadPara.PSF) && BeadPara.detectionMethod ~= 3
     currImg = deconvlucy(currImg,BeadPara.PSF,6);
     disp('----- Deconvolution frame #',num2str(ImgSeqNum),' ------');
 end
@@ -31,31 +31,70 @@ end
 try 
     BeadPara.detectionMethod = BeadPara.detectionMethod;
 catch
-    BeadPara.detectionMethod = 2;
+    BeadPara.detectionMethod = 3;
 end
 %%%%% Method 1: TPT code %%%%%
-if BeadPara.detectionMethod == 1 
-    x{1}{ImgSeqNum} = locateParticles(double(currImg2)/max(double(currImg2(:))),BeadPara); % Detect particles
-    x{1}{ImgSeqNum} = radialcenter3dvec(double(currImg2),x{1}{ImgSeqNum},BeadPara); % Localize particles
+if BeadPara.detectionMethod == 1
+    beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    x{1}{ImgSeqNum} = locateParticles(double(currImg2)/max(double(currImg2(:))),beadParam_all{ImgSeqNum}); % Detect particles
+    x{1}{ImgSeqNum} = radialcenter3dvec(double(currImg2),x{1}{ImgSeqNum},beadParam_all{ImgSeqNum}); % Localize particles
+    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
 % ----------------------------
 %%%%% Method 2: Modified TracTrac code %%%%%
 elseif BeadPara.detectionMethod == 2
-    x{1}{ImgSeqNum} = f_detect_particles3(double(currImg2)/max(double(currImg2(:))),BeadPara);
-% x{1}{ImgSeqNum} = radialcenter3dvec(double(currImg2),x{1}{ImgSeqNum},BeadPara); % Localize particles
+    beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    x{1}{ImgSeqNum} = f_detect_particles3(double(currImg2)/max(double(currImg2(:))),beadParam_all{ImgSeqNum});
+    x{1}{ImgSeqNum} = x{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
+
+%%%%% Method 3: Deconv + Active contour code, better for large beads that need bespoke deconv %%%%%
+elseif BeadPara.detectionMethod == 3
+    
+    %method specific beadPara entries
+    BeadPara.deconvThresh = 0.05;
+    BeadPara.deconvPrefilter = true; %true/false gaussian prefilter option
+    BeadPara.deconvIter = 5;
+    BeadPara.psfSize = [50,50]; %x,y size of bead-based psf
+    BeadPara.winSize = [51, 51, 51];
+    BeadPara.ratThresh = 0.20;
+    BeadPara.circThresh = 1.2;
+    BeadPara.smoothFac = 0.15;
+    beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    if ImgSeqNum > 1
+        beadParam_all{ImgSeqNum}.minSize = beadParam_all{1}.minSize;
+        beadParam_all{ImgSeqNum}.maxSize = beadParam_all{1}.maxSize;
+        beadParam_all{ImgSeqNum}.thres = beadParam_all{1}.thres;
+    end
+    
+    vol_in = double(currImg2)/max(double(currImg2(:)));
+    
+    %run preprocessing to get PSF and deconvolve
+    [vol_in,beadParam_all{ImgSeqNum}] = funPreprocLocalizeAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
+    %find interger centriods
+    [x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
+    %Use radial center-finding from TPT to get subpixel estimates based on the integer centroid locations
+    x_sub{1}{ImgSeqNum} = radialcenter3dvec(double(currImg2),x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum});
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
+    
 end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 % Add MPTPara.gridxyzROIRange left-bottom corner point coordinates
-x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + [MPTPara.gridxyzROIRange.gridx(1)-1, ...
-                                     MPTPara.gridxyzROIRange.gridy(1)-1, ...
-                                     MPTPara.gridxyzROIRange.gridz(1)-1];
+x{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum} + ...
+    [MPTPara.gridxyzROIRange.gridx(1)*MPTPara.axesScale(1)+MPTPara.xRange(1)-1*MPTPara.axesScale(1), ...
+    MPTPara.gridxyzROIRange.gridy(1)*MPTPara.axesScale(2)+MPTPara.yRange(1)-1*MPTPara.axesScale(2), ...
+    MPTPara.gridxyzROIRange.gridz(1)*MPTPara.axesScale(3)+MPTPara.depthRange(1)-1*MPTPara.axesScale(3)];
 parCoordB = x{1}{ImgSeqNum};
 
 % Remove bad coordinates that are out of image ROI
-for tempi=1:3, parCoordB( parCoordB(:,tempi)>size(ImgDef,tempi), : ) = []; end
-for tempi=1:3, parCoordB( parCoordB(:,tempi)<1, : ) = []; end
-
+%%%%% Remove parCoord outside the image area %%%%%
+parCoordB( parCoordB(:,1) > MPTPara.xRange(2),:) = [];
+parCoordB( parCoordB(:,2) > MPTPara.yRange(2),:) = [];
+parCoordB( parCoordB(:,3) > MPTPara.depthRange(2),:) = [];
+parCoordB( parCoordB(:,1) < MPTPara.xRange(1),:) = [];
+parCoordB( parCoordB(:,2) < MPTPara.yRange(1),:) = [];
+parCoordB( parCoordB(:,3) < MPTPara.depthRange(1),:) = [];
 
 %%%%% Plot detected particles %%%%%
 % close all;
@@ -68,7 +107,7 @@ for tempi=1:3, parCoordB( parCoordB(:,tempi)<1, : ) = []; end
 
 
 %%%%% Report detected beads # %%%%%
-% disp(['Detected particle # in ref image: ',num2str(size(parCoordA,1))]);
+disp(['Detected particle # in ref image: ',num2str(size(parCoordA,1))]);
 disp(['Detected particle # in def image: ',num2str(size(parCoordB,1))]);
 % disp('%%%%%% Detect particles: Done! %%%%%%'); fprintf('\n');
 
@@ -98,7 +137,7 @@ disp(['Detected particle # in def image: ',num2str(size(parCoordB,1))]);
    'iterStopThres', MPTPara.iterStopThres, 'usePrevResults', MPTPara.usePrevResults, ...
    'strain_n_neighbors',MPTPara.strain_n_neighbors, 'strain_f_o_s',MPTPara.strain_f_o_s, ...
    'gridxyzROIRange',MPTPara.gridxyzROIRange, 'parCoordB_prev',parCoordB_prev, ...
-   'uvw_B2A_prev',uvw_B2A_refB_prev, 'ImgSeqNum',ImgSeqNum, ...
+   'uvw_B2A_prev',uvw_B2A_refB_prev, 'ImgSeqNum',ImgSeqNum,'ImgSize',size(currImg), ...
    'BeadParaDistMissing',BeadPara.distMissing);
 
 

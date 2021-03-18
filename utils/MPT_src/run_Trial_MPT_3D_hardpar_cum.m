@@ -1,5 +1,5 @@
 % %%%%%%%%%%%%%%%%%% Trial-MPT (3D cumulative mode) %%%%%%%%%%%%%%%%%
-% Main file of code "Topology-based rotation-invariant augmented Lagrangian 
+% Main file of code "Topology-based rotation-invariant augmented Lagrangian
 % multiple particle tracking (Trial-MPT)"
 % ***********************************************
 % Dimension: 3D
@@ -26,13 +26,16 @@
 % Date: 2020.12.
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% 
+%%
 %%%%% Load 3D volumetric images %%%%%
 try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
 
-ImgSeqNum=1; [file_name,Img] = funReadImage3(fileNameAll,ImgSeqNum); % Load image
+ImgSeqNum=1; [file_names,Img] = funReadImage3([data_folder,data_subfolder,fileNamePrefix,'.mat'],ImgSeqNum); % Load image
 
 try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
+
+MPTPara.xRange = [0,size(Img{1},1)-1]*MPTPara.axesScale(1);
+MPTPara.yRange = [0,size(Img{1},2)-1]*MPTPara.axesScale(1);
 
 %%%%% Update MPTPara %%%%%
 MPTPara.gridxyzROIRange.gridx = [1,size(Img{1},1)];
@@ -44,12 +47,14 @@ disp('%%%%%% Load reference image: Done! %%%%%%'); fprintf('\n');
 
 %%%%% Load image mask file %%%%%
 try load(im_roi_mask_file_path); catch; end
-try MPTPara.ImgRefMask = im_roi'; % Load stored image roi if existed
-catch, MPTPara.ImgRefMask = ones(size(Img{1})); % Set up default image mask file
+try MPTPara.ImgRefMask = im_roi'; % Load stored image roi if it exists
+catch
+    disp('No mask, using whole image...')
+    MPTPara.ImgRefMask = ones(size(Img{1})); % Set up default image mask file
 end
 disp('%%%%%% Load image mask file: Done! %%%%%%'); fprintf('\n');
 
-   
+
 %% ====== Detect particles ======
 %%%%% Particle detection parameters %%%%%
 %%%%% Bead Parameter %%%%%
@@ -57,54 +62,99 @@ disp('%%%%%% Load image mask file: Done! %%%%%%'); fprintf('\n');
 % BeadPara.beadSize = 0;          % Estimated radius of a single particle
 % BeadPara.minSize = 2;           % Minimum radius of a single particle
 % BeadPara.maxSize = 1000;        % Maximum radius of a single particle
+% BeadPara.maxSize = 1000;        % Maximum radius of a single particle
 % BeadPara.winSize = [5, 5, 5];   % By default
 % BeadPara.dccd = [1,1,1];        % By default
 % BeadPara.abc = [1,1,1];         % By default
 % BeadPara.forloop = 1;           % By default
 % BeadPara.randNoise = 1e-7;      % By default
+% BeadPara.numBeadsPSF = 1        % Number of bead to select and average for PSF
 % BeadPara.PSF = [];              % PSF function; Example: PSF = fspecial('disk', BeadPara.beadSize-1 ); % Disk blur
-% BeadPara.distMissing = 5;       % Distance threshold to check whether particle has a match or not 
+% BeadPara.distMissing = 5;       % Distance threshold to check whether particle has a match or not
 % BeadPara.color = 'white';       % By default
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ImgSeqNum = 1; % First reference image
-   
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Several methods to detect particles %%%%%
-try 
+try
     BeadPara.detectionMethod = BeadPara.detectionMethod;
 catch
-    BeadPara.detectionMethod = 2;
+    BeadPara.detectionMethod = 3;
 end
-%%%%% Method 1: TPT code %%%%%
-if BeadPara.detectionMethod == 1 
-    x{1}{ImgSeqNum} = locateParticles(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),BeadPara); % Detect particles
-    x{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x{1}{ImgSeqNum},BeadPara); % Localize particles
+%%%%% Method 1: TPT code, better for high-density seeding %%%%%
+if BeadPara.detectionMethod == 1
+    beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    x_px{1}{ImgSeqNum} = locateParticles(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum}); % Detect particles
+    x_sub{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}); % Localize particles
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
 % ----------------------------
-%%%%% Method 2: Modified TracTrac code %%%%%
+    
+%%%%% Method 2: Modified TracTrac code, better for lower density, medium size beads %%%%%
 elseif BeadPara.detectionMethod == 2
-    x{1}{ImgSeqNum} = f_detect_particles3(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),BeadPara);
-    % x{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x{1}{ImgSeqNum},BeadPara); % Localize particles
+    beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    x_sub{1}{ImgSeqNum} = f_detect_particles3(double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:))),beadParam_all{ImgSeqNum});
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
+    
+%%%%% Method 3: Deconv + Active contour code, better for large beads that need bespoke deconv %%%%%
+elseif BeadPara.detectionMethod == 3
+    
+    %method specific beadPara entries
+    BeadPara.deconvThresh = 0.05;
+    BeadPara.deconvPrefilter = true; %true/false gaussian prefilter option
+    BeadPara.deconvIter = 5;
+    BeadPara.psfSize = [25,25]; %x,y size of bead-based psf
+    BeadPara.winSize = [7, 7, 7];
+    BeadPara.ratThresh = 0.20;
+    BeadPara.circThresh = 1.0;
+    BeadPara.smoothFac = 0.15;
+    beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
+    if ImgSeqNum > 1
+        beadParam_all{ImgSeqNum}.minSize = beadParam_all{1}.minSize;
+        beadParam_all{ImgSeqNum}.maxSize = beadParam_all{1}.maxSize;
+        beadParam_all{ImgSeqNum}.thres = beadParam_all{1}.thres;
+    end
+    
+    vol_in = double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:)));
+    
+    %run preprocessing to get PSF and deconvolve
+    [vol_in,beadParam_all{ImgSeqNum}] = funPreprocLocalizeAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
+    %find interger centriods
+    [x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
+    %Use radial center-finding from TPT to get subpixel estimates based on the integer centroid locations
+    x_sub{1}{ImgSeqNum} = radialcenter3dvec(double(Img{ImgSeqNum}),x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum});
+    x_sub{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum}.*MPTPara.axesScale; %convert to um units
+    
 end
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% Store particle positions as "parCoordA" %%%%%
-x{1}{ImgSeqNum} = x{1}{ImgSeqNum} + [MPTPara.gridxyzROIRange.gridx(1)-1, MPTPara.gridxyzROIRange.gridy(1)-1, MPTPara.gridxyzROIRange.gridz(1)-1];
+x{1}{ImgSeqNum} = x_sub{1}{ImgSeqNum} + ...
+    [MPTPara.gridxyzROIRange.gridx(1)*MPTPara.axesScale(1)+MPTPara.xRange(1)-1*MPTPara.axesScale(1), ...
+    MPTPara.gridxyzROIRange.gridy(1)*MPTPara.axesScale(2)+MPTPara.yRange(1)-1*MPTPara.axesScale(2), ...
+    MPTPara.gridxyzROIRange.gridz(1)*MPTPara.axesScale(3)+MPTPara.depthRange(1)-1*MPTPara.axesScale(3)];
 parCoordA = x{1}{ImgSeqNum};
 
-%%%%% Remove bad parCoord outside the image area %%%%%
-for tempi=1:3, parCoordA( parCoordA(:,tempi)>size(Img{ImgSeqNum},tempi), : ) = []; end
-for tempi=1:3, parCoordA( parCoordA(:,tempi)<1, : ) = []; end
- 
+%%%%% Remove parCoord outside the image area %%%%%
+parCoordA( parCoordA(:,1) > MPTPara.xRange(2),:) = [];
+parCoordA( parCoordA(:,2) > MPTPara.yRange(2),:) = [];
+parCoordA( parCoordA(:,3) > MPTPara.depthRange(2),:) = [];
+parCoordA( parCoordA(:,1) < MPTPara.xRange(1),:) = [];
+parCoordA( parCoordA(:,2) < MPTPara.yRange(1),:) = [];
+parCoordA( parCoordA(:,3) < MPTPara.depthRange(1),:) = [];
+
 %%%%% Plot %%%%%
 figure, plot3(parCoordA(:,1),parCoordA(:,2),parCoordA(:,3),'bo');
-view(3); box on; axis equal; axis tight; set(gca,'fontsize',18); 
+view(3); box on; axis equal; axis tight; set(gca,'fontsize',18);
 title('Detected particles in ref image','fontweight','normal');
- 
+
 %%%%% Report detected beads # %%%%%
 disp(['Detected particle # in ref image: ',num2str(size(parCoordA,1))]);
 disp('%%%%%% Detect particles: Done! %%%%%%'); fprintf('\n');
- 
+
 
 
 %% %%%%% Initialization %%%%%
@@ -122,26 +172,26 @@ disp('%%%%%% Detect particles: Done! %%%%%%'); fprintf('\n');
 % MPTPara.usePrevResults = 0;      % Whether use previous results or not: 0-no; 1-yes;
 
 %%%%%% To store results %%%%%
-parCoord_prev = cell(length(file_name),1);     parCoord_prev{1} = parCoordA;
-uvw_B2A_prev = cell(length(file_name)-1,1);    track_A2B_prev = cell(length(file_name)-1,1);
-resultDisp = cell(length(file_name)-1,1);      resultDefGrad = cell(length(file_name)-1,1);
- 
+parCoord_prev = cell(length(file_names),1);     parCoord_prev{1} = parCoordA;
+uvw_B2A_prev = cell(length(file_names)-1,1);    track_A2B_prev = cell(length(file_names)-1,1);
+resultDisp = cell(length(file_names)-1,1);      resultDefGrad = cell(length(file_names)-1,1);
 
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for ImgSeqNum = 2 : length(file_name)  % "ImgSeqNum" is the frame index
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     
     disp(['====== Frame #',num2str(ImgSeqNum),' ======']);
-
+    
     %%%%% Load image volumetric data %%%%%
     try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
-    tempvol = load(file_name{ImgSeqNum}); fieldName = fieldnames(tempvol);
-    Img{2} = getfield(tempvol,fieldName{1}); clear tempvol; %#ok<GFLD>
+    tempvol = load(file_names{ImgSeqNum}); fieldName = fieldnames(tempvol);
+    Img{2} = getfield(tempvol,fieldName{2}); clear tempvol; %#ok<GFLD>
     if iscell(Img{2}), Img{2}=Img{2}{1}; end
     try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
-
+    
     %%%%% Trial_MPT_tracking %%%%%
-    [parCoordB_temp,uvw_B2A_temp,resultDisp_temp,resultDefGrad_temp,track_A2B_temp,~] = fun_TrialMPT_3D_HardPar( ...
-       ImgSeqNum,Img{2},BeadPara,MPTPara,parCoordA,parCoord_prev(2:end),uvw_B2A_prev);
+    [parCoordB_temp,uvw_B2A_temp,resultDisp_temp,resultDefGrad_temp,track_A2B_temp,~,beadParam_all] = fun_TrialMPT_3D_HardPar( ...
+        ImgSeqNum,Img{2},BeadPara,beadParam_all,MPTPara,parCoordA,parCoord_prev(2:end),uvw_B2A_prev);
     
     %%%%% Store results %%%%%
     parCoord_prev{ImgSeqNum} = parCoordB_temp;
@@ -149,63 +199,65 @@ for ImgSeqNum = 2 : length(file_name)  % "ImgSeqNum" is the frame index
     resultDisp{ImgSeqNum-1} = resultDisp_temp;
     resultDefGrad{ImgSeqNum-1} = resultDefGrad_temp;
     track_A2B_prev{ImgSeqNum-1} = track_A2B_temp;
-      
+    
 end
-  
+
 
 %%%%% Cumulative tracking ratio %%%%%
 disp('%%%%% Calculate cumulative tracking ratio %%%%%'); fprintf('\n');
-track_ratio = zeros(length(file_name)-1,1);
-DefType = 'exp'; defList = [2:1:length(file_name)]';
-  
-for ImgSeqNum = 2 : length(file_name)
-    track_A2B = track_A2B_prev{ImgSeqNum-1}; 
-    track_ratio(ImgSeqNum-1) = length(track_A2B(track_A2B>0))/size(parCoord_prev{ImgSeqNum},1);      
+track_ratio = zeros(length(file_names)-1,1);
+DefType = 'exp'; defList = [2:1:length(file_names)]';
+
+for ImgSeqNum = 2 : length(file_names)
+    track_A2B = track_A2B_prev{ImgSeqNum-1};
+    track_ratio(ImgSeqNum-1) = length(track_A2B(track_A2B>0))/size(parCoord_prev{ImgSeqNum},1);
 end
- 
+
 fig=figure; ax=axes; hold on; plot(defList,track_ratio,'r^-.','linewidth',1);
 adjust_fig(fig,ax,'','',''); box on; title('');
 xlabel('Frame #'); ylabel('Tracking ratio');
-axis([2,length(file_name),0,1]);
+axis([2,length(file_names),0,1]);
 
 %%%%% Save results %%%%%
 disp('%%%%%% Trial-MPT hard particle tracking: Done! %%%%%%'); fprintf('\n');
 results_file_name = 'results_3D_hardpar.mat';
 save(results_file_name,'parCoord_prev','uvw_B2A_prev','resultDisp','resultDefGrad','track_A2B_prev');
- 
+
 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Postprocessing
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% Visualize tracked cumulative displacement of each frame %%%%%
 disp('%%%%% Plot tracked cumulative deformations %%%%%'); fprintf('\n');
 
 %%%%% Experimental parameters %%%%%
-try xstep = MPTPara.xstep; catch, xstep = 1; end % unit: um/px
-try tstep = MPTPara.tstep; catch, tstep = 1; end % unit: us  
+%already handled in localization
+%try axesScale = MPTPara.xstep; catch, axes_scale = [1,1,1]; end % unit: um/px
+axes_scale = [1,1,1];
+try tstep = MPTPara.tstep; catch, tstep = 1; end % unit: us
 % ImgSeqNum  % Frame #
- 
+
 %%%%% Plot tracked incremental displacement field %%%%%
 %%%%% Make a video %%%%%
 v = VideoWriter('video_3D_cum.avi'); v.FrameRate = 5; open(v); figure,
 
-for ImgSeqNum = 2:length(file_name)
+for ImgSeqNum = 2:length(file_names)
     
     % Displacement from tracked particles on deformed frame
     disp_A2B_parCoordB = -uvw_B2A_prev{ImgSeqNum-1};
     parCoordB = parCoord_prev{ImgSeqNum};
-
+    
     %%%%% Plot displacements %%%%%
-    clf, plotCone3(parCoordB(:,1)*xstep,parCoordB(:,2)*xstep,parCoordB(:,3)*xstep, ...
-        disp_A2B_parCoordB(:,1)*xstep ,disp_A2B_parCoordB(:,2)*xstep ,disp_A2B_parCoordB(:,3)*xstep  );
-    set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;  
+    clf, plotCone3(parCoordB(:,1)*axes_scale(1),parCoordB(:,2)*axes_scale(2),parCoordB(:,3)*axes_scale, ...
+        disp_A2B_parCoordB(:,1)*axes_scale(1),disp_A2B_parCoordB(:,2)*axes_scale(2),disp_A2B_parCoordB(:,3)*axes_scale(3));
+    set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
     title(['Tracked cumulative displacement (#',num2str(ImgSeqNum),')'],'fontweight','normal');
     xlabel('x'); ylabel('y'); zlabel('z');
-    axis(xstep*[MPTPara.gridxyzROIRange.gridx(1), MPTPara.gridxyzROIRange.gridx(2), ...
-          MPTPara.gridxyzROIRange.gridy(1), MPTPara.gridxyzROIRange.gridy(2), ...
-          MPTPara.gridxyzROIRange.gridz(1), MPTPara.gridxyzROIRange.gridz(2)]);
+    axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
+        MPTPara.yRange(1), MPTPara.yRange(2), ...
+        MPTPara.depthRange(1), MPTPara.depthRange(2)]);
     
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -218,35 +270,35 @@ close(v);
 %% %%%%% Compute trajectory %%%%%
 
 %%%%% Initialization %%%%%
-resultDispCurr = resultDisp{1}; 
-parCoordA = resultDispCurr.parCoordA; 
-parCoordATraj = cell(size(parCoordA,1),1); 
+resultDispCurr = resultDisp{1};
+parCoordA = resultDispCurr.parCoordA;
+parCoordATraj = cell(size(parCoordA,1),1);
 
 %%%%% Compute and collect all trajectory segments %%%%%
 for parInd = 1:size(parCoordA,1)
     
     for ImgSeqNum = 2:(size(resultDisp,1)+1)
-    
+        
         resultDispCurr = resultDisp{ImgSeqNum-1};
-        parCoordB = resultDispCurr.parCoordB; 
-        track_A2B = resultDispCurr.track_A2B; 
+        parCoordB = resultDispCurr.parCoordB;
+        track_A2B = resultDispCurr.track_A2B;
         
         if track_A2B(parInd) > 0
             parCoordATraj{parInd}(ImgSeqNum-1,1:3) = parCoordB(track_A2B(parInd),1:3);
         else
-            parCoordATraj{parInd}(ImgSeqNum-1,1:3) = [nan,nan,nan]; 
+            parCoordATraj{parInd}(ImgSeqNum-1,1:3) = [nan,nan,nan];
         end
     end
-     
+    
 end
- 
 
-%%%%% Plot tracked trajectories %%%%% 
+
+%%%%% Plot tracked trajectories %%%%%
 disp('%%%%% Plot tracked trajectories %%%%%'); fprintf('\n');
 figure,
 for parInd = 1:size(parCoordA,1)
     try
-        wayPoints = parCoordATraj{parInd}; 
+        wayPoints = parCoordATraj{parInd};
         if (size(resultDisp,1)+1)<4
             hold on; line(wayPoints(isnan(wayPoints(:,1))<1,1),wayPoints(isnan(wayPoints(:,1))<1,2),wayPoints(isnan(wayPoints(:,1))<1,3)); view(3); % straight lines
         else
@@ -259,43 +311,104 @@ for parInd = 1:size(parCoordA,1)
     end
 end
 
-set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;  
+set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
 title('Tracked particle trajectory','fontweight','normal');
 xlabel('x'); ylabel('y'); zlabel('z');
-axis(xstep*[MPTPara.gridxyzROIRange.gridx(1), MPTPara.gridxyzROIRange.gridx(2), ...
-      MPTPara.gridxyzROIRange.gridy(1), MPTPara.gridxyzROIRange.gridy(2), ...
-      MPTPara.gridxyzROIRange.gridz(1), MPTPara.gridxyzROIRange.gridz(2)]);
+axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
+        MPTPara.yRange(1), MPTPara.yRange(2), ...
+        MPTPara.depthRange(1), MPTPara.depthRange(2)]);
+
+    
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% errors for RB motion
+disp('%%%%% Compute tracked cumulative displacements %%%%%'); fprintf('\n');
+clear disp_A2BCum RMSD_*
+
+for ii = 1:length(resultDisp)
+   disp_A2BCum{ii} = resultDisp{ii}.disp_A2B_parCoordB;
+    
+end
+
+mean_cum_disp = cellfun(@(x) mean(x,1),disp_A2BCum,'UniformOutput',false);
+mean_cum_disp = reshape(cell2mat(mean_cum_disp),3,[])';
+
+std_cum_disp = cellfun(@(x) std(x,[],1),disp_A2BCum,'UniformOutput',false);
+std_cum_disp = reshape(cell2mat(std_cum_disp),3,[])';
+
+
+for ii = 1:length(disp_A2BCum)
+    disp_meas_y_ = disp_A2BCum{ii}(:,1);
+    disp_meas_y = disp_A2BCum{ii}(:,1);
+    disp_meas_x = disp_A2BCum{ii}(:,2);
+    disp_meas_z = disp_A2BCum{ii}(:,3);
+    
+    disp_meas_y(abs(disp_meas_y_) > abs(mean(disp_meas_y_)+3*std(disp_meas_y_))) = [];
+    disp_meas_x(abs(disp_meas_y_) > abs(mean(disp_meas_y_)+3*std(disp_meas_y_))) = [];
+    disp_meas_z(abs(disp_meas_y_) > abs(mean(disp_meas_y_)+3*std(disp_meas_y_))) = [];
+    
+    N = length(disp_meas_z);
+    
+    disp_imps_y = zeros(N,1);
+    disp_imps_x = 11*ones(N,1);
+    disp_imps_z = zeros(N,1);
+    
+    RMSD_y(ii,1) = sqrt(sum((disp_meas_y - disp_imps_y).^2)/N);
+    RMSD_x(ii,1) = sqrt(sum((disp_meas_x - disp_imps_x).^2)/N);
+    RMSD_z(ii,1) = sqrt(sum((disp_meas_z - disp_imps_z).^2)/N);
+end
+
+
+imps_disp_x = 11*[1:length(mean_cum_disp)]';
+% imps_disp_x = [0.022,0.025,0.028,0.033,0.040,0.050,0.066,0.100,0.200];
+figure
+subplot(1,3,1)
+shadedErrorBar(imps_disp_x,mean_cum_disp(:,2),RMSD_x)
+% xlabel('Noise level')
+xlabel('Imposed displacement in x, um')
+ylabel('Measured displacement in x, um')
+
+subplot(1,3,2)
+shadedErrorBar(imps_disp_x,mean_cum_disp(:,1),RMSD_y)
+% xlabel('Noise level')
+xlabel('Imposed displacement in x, um')
+ylabel('Measured displacement in y, um')
+
+subplot(1,3,3)
+shadedErrorBar(imps_disp_x,mean_cum_disp(:,3),RMSD_z)
+% xlabel('Noise level')
+xlabel('Imposed displacement in x, um')
+ylabel('Measured displacement in z, um')
 
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('Modify codes below to plot interpolated displacements and strains on a uniform grid mesh');
-pause; 
+pause;
 
 ImgSeqNum = 2; % Frame #
- 
+
 
 %%%%% Previously tracked displacement field %%%%%
 resultDispCurr = resultDisp{ImgSeqNum-1};
 resultDefGradCurr = resultDefGrad{ImgSeqNum-1};
 disp_A2B_parCoordB = resultDispCurr.disp_A2B_parCoordB;
 parCoordB = resultDispCurr.parCoordB;
-  
-%%%%% Shift rigid body translations %%%%%
-disp_A2B_parCoordB(:,1) = disp_A2B_parCoordB(:,1) - median(disp_A2B_parCoordB(:,1));
-disp_A2B_parCoordB(:,2) = disp_A2B_parCoordB(:,2) - median(disp_A2B_parCoordB(:,2));
-disp_A2B_parCoordB(:,3) = disp_A2B_parCoordB(:,3) - median(disp_A2B_parCoordB(:,3));
+
+% % %%%%% remove rigid body translations %%%%%
+% % disp_A2B_parCoordB(:,1) = disp_A2B_parCoordB(:,1) - median(disp_A2B_parCoordB(:,1));
+% % disp_A2B_parCoordB(:,2) = disp_A2B_parCoordB(:,2) - median(disp_A2B_parCoordB(:,2));
+% % disp_A2B_parCoordB(:,3) = disp_A2B_parCoordB(:,3) - median(disp_A2B_parCoordB(:,3));
 
 
 %%%%% Interpolate scatterred data to gridded data %%%%%
-addpath('./Scatter2Grid3D/');
-sxyz = min([round(0.5*MPTPara.f_o_s),20])*[1,1,1]; % Step size for griddata
+sxyz = min([round(0.5*MPTPara.f_o_s),20]).*MPTpara.axesScale; % Step size for griddata
 smoothness = 1e-3; % Smoothness for regularization; "smoothness=0" means no regularization
 
 [x_Grid_refB,y_Grid_refB,z_Grid_refB,u_Grid_refB]=funScatter2Grid3D(parCoordB(:,1),parCoordB(:,2),parCoordB(:,3),disp_A2B_parCoordB(:,1),sxyz,smoothness);
 [~,~,~,v_Grid_refB]=funScatter2Grid3D(parCoordB(:,1),parCoordB(:,2),parCoordB(:,3),disp_A2B_parCoordB(:,2),sxyz,smoothness);
 [~,~,~,w_Grid_refB]=funScatter2Grid3D(parCoordB(:,1),parCoordB(:,2),parCoordB(:,3),disp_A2B_parCoordB(:,3),sxyz,smoothness);
- 
+
 % Build a displacement vector
 uvw_Grid_refB_Vector=[u_Grid_refB(:),v_Grid_refB(:),w_Grid_refB(:)]'; uvw_Grid_refB_Vector=uvw_Grid_refB_Vector(:);
 
@@ -305,24 +418,24 @@ F_Grid_refB_Vector=D_Grid*uvw_Grid_refB_Vector; % {F}={D}{U}
 
 
 %%%%% Cone plot grid data: displecement %%%%%
-figure, plotCone3(x_Grid_refB*xstep,y_Grid_refB*xstep,z_Grid_refB*xstep,u_Grid_refB*xstep,v_Grid_refB*xstep,w_Grid_refB*xstep);
-set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;  
+figure, plotCone3(x_Grid_refB*axes_scale(1),y_Grid_refB*axes_scale(2),z_Grid_refB*axes_scale(3),u_Grid_refB*axes_scale(1),v_Grid_refB*axes_scale(2),w_Grid_refB*axes_scale(3));
+set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
 title('Tracked cumulative displacement','fontweight','normal');
-axis(xstep*[MPTPara.gridxyzROIRange.gridx(1), MPTPara.gridxyzROIRange.gridx(2), ...
-          MPTPara.gridxyzROIRange.gridy(1), MPTPara.gridxyzROIRange.gridy(2), ...
-          MPTPara.gridxyzROIRange.gridz(1), MPTPara.gridxyzROIRange.gridz(2)]);
+axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
+        MPTPara.yRange(1), MPTPara.yRange(2), ...
+        MPTPara.depthRange(1), MPTPara.depthRange(2)]);
 
 %%%%% Generate an FE-mesh %%%%%
-[coordinatesFEM_refB,elementsFEM_refB] = funMeshSetUp3(x_Grid_refB*xstep,y_Grid_refB*xstep,z_Grid_refB*xstep);
+[coordinatesFEM_refB,elementsFEM_refB] = funMeshSetUp3(x_Grid_refB*axes_scale(1),y_Grid_refB*axes_scale(2),z_Grid_refB*axes_scale(3));
 
 %%%%% Cone plot grid data: displacement %%%%%
-Plotdisp_show3(uvw_Grid_refB_Vector*xstep, coordinatesFEM_refB*xstep, elementsFEM_refB,[],'NoEdgeColor');
- 
-%%%%% Cone plot grid data: infinitesimal strain %%%%%
-Plotstrain_show3(F_Grid_refB_Vector, coordinatesFEM_refB*xstep, elementsFEM_refB,[],'NoEdgeColor',xstep,tstep);
- 
+Plotdisp_show3(uvw_Grid_refB_Vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
 
- 
+%%%%% Cone plot grid data: infinitesimal strain %%%%%
+Plotstrain_show3(F_Grid_refB_Vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor',1,tstep);
+
+
+
 
 
 
