@@ -21,8 +21,8 @@ import2ws();
 
 %% Specify data to import
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['uniaxial_tension_syn',filesep]; %subfolder for a specific experiment
-fileNamePrefix = 'syn_*';
+data_subfolder = ['synth_dz_120_to_500um',filesep]; %subfolder for a specific experiment
+fileNamePrefix = 'dz_*';
 
 %% ======================= SET-UP SECTION ============================
 
@@ -42,7 +42,7 @@ superResFactor = 'default'; % default means sensor resolution
 
 %problem dimensions setup
 MPTPara.DIM = 3;
-MPTPara.axesScale = [1.64,1.64,depthStep]; % unit: um/px
+MPTPara.axesScale = [1.9,1.9,depthStep]; % unit: um/px
 MPTPara.depthRange = depthRange; % unit: um/px
 MPTPara.tstep = 1; % unit: us
 

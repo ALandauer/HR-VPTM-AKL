@@ -554,7 +554,7 @@ close(v);
 %% %%% Compute cumulative displacement at each step %%%%%
 disp('%%%%% Compute tracked cumulative displacements %%%%%'); fprintf('\n');
 parCoordTrajMat = cell2mat(parCoordTraj);
-clear disp_A2BCum RMSD_*
+clear disp_A2BCum RMSD_* parCoordA parCoordB parCoordACum parCoordBCum parPosHist
 
 [row1,col1] = find(isnan(parCoordTrajMat(1:length(file_names):end,1))==0);
 trackParCum_ind = row1;
@@ -567,11 +567,22 @@ for ImgSeqNum = 2:length(file_names)
     
     parCoordA = parCoordTrajMat(1:length(file_names):end,1:3);
     parCoordB = parCoordTrajMat(ImgSeqNum:length(file_names):end,1:3);
-    parCoordACum = parCoordA(trackParCum_ind,:);
-    parCoordBCum = parCoordB(trackParCum_ind,:);
-    disp_A2BCum{ImgSeqNum-1} = parCoordBCum - parCoordACum;
+    parCoordACum{ImgSeqNum-1} = parCoordA(trackParCum_ind,:);
+    parCoordBCum{ImgSeqNum-1} = parCoordB(trackParCum_ind,:);
+    disp_A2BCum{ImgSeqNum-1} = parCoordBCum{ImgSeqNum-1} - parCoordACum{ImgSeqNum-1};
+    
+    parNum = find(trackParCum_ind == 10);
+    parPosHist(ImgSeqNum-1) = parCoordBCum{ImgSeqNum-1}(parNum,3)'; 
     
 end
+
+figure
+subplot(1,2,1)
+plot([-196:10:200],-(parPosHist))
+axis image
+subplot(1,2,2)
+plot([-196:10:200],-(parPosHist+[-196:10:200]))
+axis image
 
 mean_cum_disp = cellfun(@(x) mean(x,1),disp_A2BCum,'UniformOutput',false);
 mean_cum_disp = reshape(cell2mat(mean_cum_disp),3,[])';
@@ -593,8 +604,8 @@ for ii = 1:length(disp_A2BCum)
     N = length(disp_meas_z);
     
     disp_imps_y = zeros(N,1);
-    disp_imps_x = ii*11*ones(N,1);
-    disp_imps_z = zeros(N,1);
+    disp_imps_x = zeros(N,1);
+    disp_imps_z = -ii*10*ones(N,1);
     
     RMSD_y(ii,1) = sqrt(sum((disp_meas_y - disp_imps_y).^2)/N);
     RMSD_x(ii,1) = sqrt(sum((disp_meas_x - disp_imps_x).^2)/N);
@@ -602,41 +613,55 @@ for ii = 1:length(disp_A2BCum)
 end
 
 
-imps_disp_x = 11*[1:length(mean_cum_disp)]';
+imps_disp_x = 10*[1:length(mean_cum_disp)]';
 % imps_disp_x = [0.022,0.025,0.028,0.033,0.040,0.050,0.066,0.100,0.200];
 figure
 subplot(1,3,1)
 shadedErrorBar(imps_disp_x,mean_cum_disp(:,2),RMSD_x)
 xlabel('Noise level')
 ylabel('Measured displacement in x, um')
+axis image
 
 subplot(1,3,2)
 shadedErrorBar(imps_disp_x,mean_cum_disp(:,1),RMSD_y)
 xlabel('Noise level')
 ylabel('Measured displacement in y, um')
+axis image
 
 subplot(1,3,3)
 shadedErrorBar(imps_disp_x,mean_cum_disp(:,3),RMSD_z)
 xlabel('Noise level')
 ylabel('Measured displacement in z, um')
+axis image
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('Modify codes below to plot interpolated displacements and strains on a uniform grid mesh');
-pause;
+% pause;
+clear disp_A2BCum parCoordA parCoordB parCoordACum parCoordBCum trackParCum_ind
 
-ImgSeqNum = 2; % Frame #
+ImgSeqNum = 3; % Frame #
+
+parCoordTrajMat = cell2mat( parCoordTraj );
+
+[row1,col1] = find(isnan(parCoordTrajMat(1:length(file_names):end,1)) == 0);
+trackParCum_ind{1} = row1;
+
+for ImgSeqNum_ = 2:length(file_names)
+    [row2,col2] = find(isnan(parCoordTrajMat(ImgSeqNum_:length(file_names):end,1)) == 0);
+    trackParCum_ind{ImgSeqNum_} = intersect(row2,trackParCum_ind{ImgSeqNum_-1});
+end
 
 %%%%% Previously tracked displacement field %%%%%
 parCoordA = parCoordTrajMat(1:length(file_names):end,1:3);
 parCoordB = parCoordTrajMat(ImgSeqNum:length(file_names):end,1:3);
-parCoordACum = parCoordA(trackParCum_ind,1:3);
-parCoordBCum = parCoordB(trackParCum_ind,1:3);
+parCoordACum = parCoordA(trackParCum_ind{ImgSeqNum},1:3);
+parCoordBCum = parCoordB(trackParCum_ind{ImgSeqNum},1:3);
 disp_A2BCum = parCoordBCum - parCoordACum;
 
 %%%%% Interpolate scatterred data to gridded data %%%%%
-sxyz = min([round(0.5*MPTPara.f_o_s),20]).*MPTPara.axesScale; % Step size for griddata
-smoothness = 1e-3; % Smoothness for regularization; "smoothness=0" means no regularization
+sxyz = min([round(0.5*MPTPara.f_o_s),10]).*MPTPara.axesScale; % Step size for griddata
+smoothness = 0.1;%1e-3; % Smoothness for regularization; "smoothness=0" means no regularization
 
 [x_Grid_refB,y_Grid_refB,z_Grid_refB,u_Grid_refB]=funScatter2Grid3D(parCoordBCum(:,1),parCoordBCum(:,2),parCoordBCum(:,3),disp_A2BCum(:,1),sxyz,smoothness);
 [~,~,~,v_Grid_refB]=funScatter2Grid3D(parCoordBCum(:,1),parCoordBCum(:,2),parCoordBCum(:,3),disp_A2BCum(:,2),sxyz,smoothness);
