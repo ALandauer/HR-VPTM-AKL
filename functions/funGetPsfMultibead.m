@@ -16,14 +16,14 @@ function [psf_mean] = funGetPsfMultibead(img,psf_size,num_beads)
 %normalize the image to max = 1
 img = double(img)/max(double(img(:)));
 
-disp('%%%%%% Collect bead PSF from volume %%%%%%')
+disp('%%%%%% Collect particle PSF from volume %%%%%%')
 
 %display for the user and prompt for input
 f1 = figure;
 try
-    imagesc3D(img)
+    imagesc3D(img/1.15)
 catch
-    imshow3D(img)
+    imshow3D(img/1.15,[])
 end
 drawnow
 
