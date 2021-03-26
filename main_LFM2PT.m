@@ -21,15 +21,15 @@ import2ws();
 
 %% Specify data to import
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['synth_dz_120_to_500um',filesep]; %subfolder for a specific experiment
-fileNamePrefix = 'dz_*';
+data_subfolder = ['dx_5um_synth',filesep]; %subfolder for a specific experiment
+fileNamePrefix = 'dx_*';
 
 %% ======================= SET-UP SECTION ============================
 
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-450, 450];
+depthRange = [-80, 720];
 % axial slice step (in um)
 depthStep = 5;
 
@@ -42,7 +42,7 @@ superResFactor = 'default'; % default means sensor resolution
 
 %problem dimensions setup
 MPTPara.DIM = 3;
-MPTPara.axesScale = [1.9,1.9,depthStep]; % unit: um/px
+MPTPara.axesScale = [1.64,1.64,depthStep]; % unit: um/px
 MPTPara.depthRange = depthRange; % unit: um/px
 MPTPara.tstep = 1; % unit: us
 
@@ -213,7 +213,7 @@ MPTPara.usePrevResults = 0;      % Whether use previous results or not: 0-no; 1-
 distThres = 18; % distance threshold to connect split trajectory segments
 extrapMethod = 'pchip';  % extrapolation scheme to connect split trajectory segments
                          % suggestion: 'nearest' for Brownian motion
-minTrajSegLength = 5;    % the minimum length of trajectory segment that will be extrapolated
+minTrajSegLength = 12;    % the minimum length of trajectory segment that will be extrapolated
 maxGapTrajSeqLength = 1; % the max frame# gap between connected trajectory segments
 
 %%%%% Run Trial-MPT tracking %%%%%

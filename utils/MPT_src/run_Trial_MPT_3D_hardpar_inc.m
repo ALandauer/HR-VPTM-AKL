@@ -576,13 +576,13 @@ for ImgSeqNum = 2:length(file_names)
     
 end
 
-figure
-subplot(1,2,1)
-plot([-196:10:200],-(parPosHist))
-axis image
-subplot(1,2,2)
-plot([-196:10:200],-(parPosHist+[-196:10:200]))
-axis image
+% % % figure
+% % % subplot(1,2,1)
+% % % plot([-196:10:200],-(parPosHist))
+% % % axis image
+% % % subplot(1,2,2)
+% % % plot([-196:10:200],-(parPosHist+[-196:10:200]))
+% % % axis image
 
 mean_cum_disp = cellfun(@(x) mean(x,1),disp_A2BCum,'UniformOutput',false);
 mean_cum_disp = reshape(cell2mat(mean_cum_disp),3,[])';
@@ -597,42 +597,46 @@ for ii = 1:length(disp_A2BCum)
     disp_meas_x = disp_A2BCum{ii}(:,2);
     disp_meas_z = disp_A2BCum{ii}(:,3);
     
-    disp_meas_y(abs(disp_meas_y_) > abs(mean(disp_meas_y_)+3*std(disp_meas_y_))) = [];
-    disp_meas_x(abs(disp_meas_y_) > abs(mean(disp_meas_y_)+3*std(disp_meas_y_))) = [];
-    disp_meas_z(abs(disp_meas_y_) > abs(mean(disp_meas_y_)+3*std(disp_meas_y_))) = [];
+%     disp_meas_y(abs(disp_meas_y_) > abs(mean(disp_meas_y_)+3*std(disp_meas_y_))) = [];
+%     disp_meas_x(abs(disp_meas_y_) > abs(mean(disp_meas_y_)+3*std(disp_meas_y_))) = [];
+%     disp_meas_z(abs(disp_meas_y_) > abs(mean(disp_meas_y_)+3*std(disp_meas_y_))) = [];
     
     N = length(disp_meas_z);
     
-    disp_imps_y = zeros(N,1);
     disp_imps_x = zeros(N,1);
-    disp_imps_z = -ii*10*ones(N,1);
+    disp_imps_z = zeros(N,1);
+    
+    disp_imps_y = -ii*5*ones(N,1);
     
     RMSD_y(ii,1) = sqrt(sum((disp_meas_y - disp_imps_y).^2)/N);
     RMSD_x(ii,1) = sqrt(sum((disp_meas_x - disp_imps_x).^2)/N);
     RMSD_z(ii,1) = sqrt(sum((disp_meas_z - disp_imps_z).^2)/N);
 end
 
-
-imps_disp_x = 10*[1:length(mean_cum_disp)]';
-% imps_disp_x = [0.022,0.025,0.028,0.033,0.040,0.050,0.066,0.100,0.200];
+x_lbl = 'Imposed disp y';
+% imps_disp = 20*[1:length(mean_cum_disp)]';
+imps_disp = 5*[1:length(mean_cum_disp)]';
+% imps_disp = [0.022,0.025,0.028,0.033,0.040,0.050,0.066,0.100,0.200];
 figure
 subplot(1,3,1)
-shadedErrorBar(imps_disp_x,mean_cum_disp(:,2),RMSD_x)
-xlabel('Noise level')
+shadedErrorBar(imps_disp,mean_cum_disp(:,2),RMSD_x)
+% xlabel('Noise level')
+xlabel(x_lbl)
 ylabel('Measured displacement in x, um')
-axis image
+% axis image
 
 subplot(1,3,2)
-shadedErrorBar(imps_disp_x,mean_cum_disp(:,1),RMSD_y)
-xlabel('Noise level')
+shadedErrorBar(imps_disp,mean_cum_disp(:,1),RMSD_y)
+xlabel(x_lbl)
+% xlabel('Noise level')
 ylabel('Measured displacement in y, um')
-axis image
+% axis image
 
 subplot(1,3,3)
-shadedErrorBar(imps_disp_x,mean_cum_disp(:,3),RMSD_z)
-xlabel('Noise level')
+shadedErrorBar(imps_disp,mean_cum_disp(:,3),RMSD_z)
+xlabel(x_lbl)
 ylabel('Measured displacement in z, um')
-axis image
+% axis image
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
