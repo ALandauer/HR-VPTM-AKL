@@ -22,13 +22,10 @@ configFile = [folder, subfolder,  'LFMconfig.yaml'];
 
 %show figure for cropping
 [~,rect] = imcrop(LensletImageSeq{1}+WhiteImage/4);
-[LensletImageSeq{1}] = imcrop(LensletImageSeq{1},rect);
 
 % crop files to ROI before reconstructing for speed up
-if length(length(LensletImageSeq))>1
-    for ii = 2:length(LensletImageSeq)
-        LensletImageSeq{ii} = imcrop(LensletImageSeq{ii}, rect);
-    end
+for ii = 1:length(LensletImageSeq)
+    [LensletImageSeq{ii}] = imcrop(LensletImageSeq{ii}, rect);
 end
 WhiteImage = imcrop(WhiteImage, rect);
 

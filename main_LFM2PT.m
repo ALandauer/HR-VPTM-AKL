@@ -21,15 +21,15 @@ import2ws();
 
 %% Specify data to import
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['dx_5um_synth',filesep]; %subfolder for a specific experiment
-fileNamePrefix = 'dx_*';
+data_subfolder = ['dz_short',filesep]; %subfolder for a specific experiment
+fileNamePrefix = 'dz_*';
 
 %% ======================= SET-UP SECTION ============================
 
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-80, 720];
+depthRange = [-790, 220];
 % axial slice step (in um)
 depthStep = 5;
 
