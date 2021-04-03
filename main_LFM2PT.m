@@ -21,7 +21,7 @@ import2ws();
 
 %% Specify data to import
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['dz_short',filesep]; %subfolder for a specific experiment
+data_subfolder = ['dz_20um_exp_001',filesep]; %subfolder for a specific experiment
 fileNamePrefix = 'dz_*';
 
 %% ======================= SET-UP SECTION ============================
@@ -29,7 +29,7 @@ fileNamePrefix = 'dz_*';
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-790, 220];
+depthRange = [-800, 260];
 % axial slice step (in um)
 depthStep = 5;
 
@@ -198,11 +198,11 @@ BeadPara.color = 'white';       % By default
 
 %%%%% Trial-MPT Parameter %%%%%
 MPTPara.f_o_s = Inf;              % Size of search field: max(|u|,|v|,|w|)
-MPTPara.n_neighborsMax = 14;     % Max # of neighboring particles
+MPTPara.n_neighborsMax = 8;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
 MPTPara.smoothness = 1e-1;       % Coefficient of regularization
-MPTPara.outlrThres = 0;          % Threshold for removing outliers in MPT
+MPTPara.outlrThres = 5;          % Threshold for removing outliers in MPT
 MPTPara.maxIterNum = 8;         % Max ADMM iteration number
 MPTPara.iterStopThres = 1e-3;    % ADMM iteration stopping threshold
 MPTPara.strain_n_neighbors = 8; % # of neighboring particles used in strain gauge

@@ -114,7 +114,7 @@ matchRatioEqualsOneTime = 0; % How many times the match raio equals one
 
 
 %%%%% Use previous results for a new frame %%%%%
-if ImgSeqNum>2 && usePrevResults
+if ImgSeqNum >= 2 && usePrevResults == 1
     % disp('Use previous results as an initial estimate');
     [tempu,tempv,tempw] = funInitGuess3(parCoordB_prev,uvw_B2A_prev,parCoordBCurr,ImgSeqNum);
     u_B2A_curr_refB = u_B2A_curr_refB + [tempu,tempv,tempw];
@@ -147,17 +147,17 @@ while iterNum < maxIterNum
     matches_A2B = [];
     while isempty(matches_A2B) && n_neighborsMax < length(parNotMissingIndA)
         
-        if n_neighbors > 5
+        if n_neighbors > 5 && n_neighborsMax >= length(parCoordBCurr(parNotMissingIndBCurr,:)) && n_neighborsMax >= length(parCoordA(parNotMissingIndA,:))
             %             try
             %                 matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors );
             %                 % matches_A2B = f_track_hist_match( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp );
             %             catch
            
             %track with TPT using default options
-            tptParam.knnFM = 5;
+            tptParam.knnFM = n_neighbors;
             tptParam.maxIter = 16;
-            tptParam.outlrThres = 5;
-            tptParam.knnFD = 12;
+            tptParam.outlrThres = outlrThres;
+            tptParam.knnFD = n_neighborsMax;
             tptParam.fmThres = 2;
             tptParam.nSpheres = 2;
             tptParam.sizeI = ImgSize;

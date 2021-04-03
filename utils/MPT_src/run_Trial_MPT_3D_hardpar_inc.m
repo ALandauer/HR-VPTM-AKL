@@ -604,22 +604,23 @@ for ii = 1:length(disp_A2BCum)
     N = length(disp_meas_z);
     
     disp_imps_x = zeros(N,1);
-    disp_imps_z = zeros(N,1);
+    disp_imps_y = zeros(N,1);
     
-    disp_imps_y = -ii*5*ones(N,1);
+    disp_imps_z = -ii*20*ones(N,1);
     
     RMSD_y(ii,1) = sqrt(sum((disp_meas_y - disp_imps_y).^2)/N);
     RMSD_x(ii,1) = sqrt(sum((disp_meas_x - disp_imps_x).^2)/N);
     RMSD_z(ii,1) = sqrt(sum((disp_meas_z - disp_imps_z).^2)/N);
 end
 
-x_lbl = 'Imposed disp y';
+x_lbl = 'Experimental imposed disp z';
 % imps_disp = 20*[1:length(mean_cum_disp)]';
-imps_disp = 5*[1:length(mean_cum_disp)]';
+imps_disp = -20*[1:length(mean_cum_disp)]';
 % imps_disp = [0.022,0.025,0.028,0.033,0.040,0.050,0.066,0.100,0.200];
 figure
 subplot(1,3,1)
 shadedErrorBar(imps_disp,mean_cum_disp(:,2),RMSD_x)
+% shadedErrorBar(imps_disp,mean_cum_disp(:,2),std_cum_disp(:,2))
 % xlabel('Noise level')
 xlabel(x_lbl)
 ylabel('Measured displacement in x, um')
@@ -627,6 +628,7 @@ ylabel('Measured displacement in x, um')
 
 subplot(1,3,2)
 shadedErrorBar(imps_disp,mean_cum_disp(:,1),RMSD_y)
+% shadedErrorBar(imps_disp,mean_cum_disp(:,1),std_cum_disp(:,1))
 xlabel(x_lbl)
 % xlabel('Noise level')
 ylabel('Measured displacement in y, um')
@@ -634,8 +636,10 @@ ylabel('Measured displacement in y, um')
 
 subplot(1,3,3)
 shadedErrorBar(imps_disp,mean_cum_disp(:,3),RMSD_z)
+% shadedErrorBar(imps_disp,mean_cum_disp(:,3),std_cum_disp(:,3))
 xlabel(x_lbl)
 ylabel('Measured displacement in z, um')
+title('RMSD shaded region')
 % axis image
 
 %%
