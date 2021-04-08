@@ -31,9 +31,8 @@ function [matches_A2B,u_B2A_curr_refB,track_A2B] = f_track_trial_match3D( parCoo
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % ---------------------------------------------------
-% Author: Jin Yang
-% Contact and support: jyang526@wisc.edu
-% Date: 2020.12.
+% Author: Jin Yang and Alex Landauer
+% Contact and support: jyang526@wisc.edu or landauer@nist.gov
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -143,7 +142,7 @@ while iterNum < maxIterNum
     
     
     %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%% Local step: neighbor topology match %%%%%
+    %%%%% Local step: matching %%%%%
     matches_A2B = [];
     while isempty(matches_A2B) && n_neighborsMax < length(parNotMissingIndA)
         
@@ -196,7 +195,7 @@ while iterNum < maxIterNum
     end
     
     
-    if iterNum > 3
+    if iterNum > 3 || length(matches_A2B) > 2*n_neighborsMax
         %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%% Global step: Compute kinematically compatible displacement %%%%%
         
@@ -377,6 +376,7 @@ while iterNum < maxIterNum
             
             [parNotMissingIndBCurr,~] = find(dist_ABCurr < max([2, BeadParaDistMissing]));  % Find particles not missing in Particle BCurr
         end
+        
         
     end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
