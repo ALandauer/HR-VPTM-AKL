@@ -203,7 +203,7 @@ while iterNum < maxIterNum
         %%%% Method I: local moving least squares %%%%%
         if gbSolver==1
             
-            [XYZ_B2A_refB,U_B2A_refB,F_B2A_refB] = funCompDefGrad3(-u_A2B, parCoordBCurr(track_A2B(track_A2B>0),:), f_o_s, n_neighbors);
+            [XYZ_B2A_refB,U_B2A_refB,F_B2A_refB] = funCompDefGrad3(-u_A2B, parCoordBCurr(track_A2B(track_A2B>0),:), f_o_s, strain_n_neighbors);
             
             [row,~] = find(isnan(U_B2A_refB(1:3:end)) == 1);         % find nans
             XYZ_B2A_refB(row,:) = [];                                % remove nans
@@ -319,7 +319,7 @@ while iterNum < maxIterNum
         end % END of if gbSolver==0
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     else
-        [XYZ_B2A_refB,U_B2A_refB,F_B2A_refB] = funCompDefGrad3(-u_A2B, parCoordBCurr(track_A2B(track_A2B>0),:), f_o_s, n_neighbors);
+        [XYZ_B2A_refB,U_B2A_refB,F_B2A_refB] = funCompDefGrad3(-u_A2B, parCoordBCurr(track_A2B(track_A2B>0),:), f_o_s, strain_n_neighbors);
         
         [row,~] = find(isnan(U_B2A_refB(1:3:end)) == 1);         % find nans
         XYZ_B2A_refB(row,:) = [];                                % remove nans
@@ -361,7 +361,7 @@ while iterNum < maxIterNum
         tempu_Quantile = quantile(tempu,[0.25,0.5,0.75]);
         tempv_Quantile = quantile(tempv,[0.25,0.5,0.75]);
         tempw_Quantile = quantile(tempw,[0.25,0.5,0.75]);
-        f_o_s = max( [ MPTPara.strain_f_o_s; 60; tempu_Quantile(2)+0.5*(tempu_Quantile(3)-tempu_Quantile(1));
+        f_o_s = max( [ strain_f_o_s; 60; tempu_Quantile(2)+0.5*(tempu_Quantile(3)-tempu_Quantile(1));
             tempv_Quantile(2)+0.5*(tempv_Quantile(3)-tempv_Quantile(1));
             tempw_Quantile(2)+0.5*(tempw_Quantile(3)-tempw_Quantile(1))]);
         
