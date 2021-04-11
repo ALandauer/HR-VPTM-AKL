@@ -31,9 +31,8 @@ function [matches_A2B,u_B2A_curr_refB,track_A2B] = f_track_trial_match3D( parCoo
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % ---------------------------------------------------
-% Author: Jin Yang
-% Contact and support: jyang526@wisc.edu
-% Date: 2020.12.
+% Author: Jin Yang and Alex Landauer
+% Contact and support: jyang526@wisc.edu or landauer@nist.gov
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -143,11 +142,11 @@ while iterNum < maxIterNum
     
     
     %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%% Local step: neighbor topology match %%%%%
+    %%%%% Local step: matching %%%%%
     matches_A2B = [];
     while isempty(matches_A2B) && n_neighborsMax < length(parNotMissingIndA)
         
-        if n_neighbors > 5 && n_neighborsMax >= length(parCoordBCurr(parNotMissingIndBCurr,:)) && n_neighborsMax >= length(parCoordA(parNotMissingIndA,:))
+        if n_neighbors > 5 && n_neighborsMax <= length(parCoordBCurr(parNotMissingIndBCurr,:)) && n_neighborsMax <= length(parCoordA(parNotMissingIndA,:))
             %             try
             %                 matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors );
             %                 % matches_A2B = f_track_hist_match( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp );
@@ -164,15 +163,22 @@ while iterNum < maxIterNum
             matches_A2B_ = TPT(parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:),tptParam, predictor);
             matches_A2B = [[1:length(matches_A2B_)]',matches_A2B_];
             
-            %discard untrack particles
-            matches_A2B(matches_A2B(:,2) == 0,:) = [];
-            
-            disp('check')
-            %             end
+            %try other methods if TPT doesn't find enough matches
+            if length(matches_A2B(matches_A2B(:,2) > 0,:)) < length(parCoordA)/3
+                disp('Trying Neighborhood Topology matching')
+                matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors);
+            end
+            if length(matches_A2B(matches_A2B(:,2) > 0,:)) < length(parCoordA)/3
+                disp('Trying Histogram matching')
+                matches_A2B = f_track_hist_match( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp);
+            end
             
         else
             matches_A2B = f_track_nearest_neighbour3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );
         end
+        
+        %discard untrack particles
+        matches_A2B(matches_A2B(:,2) == 0,:) = [];
         
         if isempty(matches_A2B) == 1
             n_neighborsMax = round(n_neighborsMax + 3);
@@ -189,7 +195,7 @@ while iterNum < maxIterNum
     end
     
     
-    if iterNum > 3
+    if iterNum > 3 || length(matches_A2B) > 2*n_neighborsMax
         %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%% Global step: Compute kinematically compatible displacement %%%%%
         
@@ -197,7 +203,7 @@ while iterNum < maxIterNum
         %%%% Method I: local moving least squares %%%%%
         if gbSolver==1
             
-            [XYZ_B2A_refB,U_B2A_refB,F_B2A_refB] = funCompDefGrad3(-u_A2B, parCoordBCurr(track_A2B(track_A2B>0),:), f_o_s, n_neighbors);
+            [XYZ_B2A_refB,U_B2A_refB,F_B2A_refB] = funCompDefGrad3(-u_A2B, parCoordBCurr(track_A2B(track_A2B>0),:), f_o_s, strain_n_neighbors);
             
             [row,~] = find(isnan(U_B2A_refB(1:3:end)) == 1);         % find nans
             XYZ_B2A_refB(row,:) = [];                                % remove nans
@@ -313,7 +319,7 @@ while iterNum < maxIterNum
         end % END of if gbSolver==0
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     else
-        [XYZ_B2A_refB,U_B2A_refB,F_B2A_refB] = funCompDefGrad3(-u_A2B, parCoordBCurr(track_A2B(track_A2B>0),:), f_o_s, n_neighbors);
+        [XYZ_B2A_refB,U_B2A_refB,F_B2A_refB] = funCompDefGrad3(-u_A2B, parCoordBCurr(track_A2B(track_A2B>0),:), f_o_s, strain_n_neighbors);
         
         [row,~] = find(isnan(U_B2A_refB(1:3:end)) == 1);         % find nans
         XYZ_B2A_refB(row,:) = [];                                % remove nans
@@ -338,12 +344,12 @@ while iterNum < maxIterNum
     disp(['Disp update norm: ',num2str(u_B2ACurr_updateNorm)]);
     
     %%%%% Do at most five iterations that "matchRatio==1" %%%%%
-    if matchRatio > 0.999
+    if matchRatio > 0.995
         matchRatioEqualsOneTime = matchRatioEqualsOneTime+1;
     end
     
     %%%%% Stopping criterion %%%%%
-    if u_B2ACurr_updateNorm < sqrt(3)*iterStopThres || matchRatioEqualsOneTime>5
+    if u_B2ACurr_updateNorm < sqrt(3)*iterStopThres || matchRatioEqualsOneTime>3
         disp(['----- Converged! ------']); break
         
     else
@@ -355,7 +361,7 @@ while iterNum < maxIterNum
         tempu_Quantile = quantile(tempu,[0.25,0.5,0.75]);
         tempv_Quantile = quantile(tempv,[0.25,0.5,0.75]);
         tempw_Quantile = quantile(tempw,[0.25,0.5,0.75]);
-        f_o_s = max( [ 60; tempu_Quantile(2)+0.5*(tempu_Quantile(3)-tempu_Quantile(1));
+        f_o_s = max( [ strain_f_o_s; 60; tempu_Quantile(2)+0.5*(tempu_Quantile(3)-tempu_Quantile(1));
             tempv_Quantile(2)+0.5*(tempv_Quantile(3)-tempv_Quantile(1));
             tempw_Quantile(2)+0.5*(tempw_Quantile(3)-tempw_Quantile(1))]);
         
@@ -374,23 +380,8 @@ while iterNum < maxIterNum
         
     end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    
-    
-    
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('%%%%%% Trial-MPT tracking: Done! %%%%%%');
 timeCost = toc; toc
 fprintf('\n');
-
-
-
-
-
-
-
-
-
-
-
-
