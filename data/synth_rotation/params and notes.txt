@@ -1,0 +1,4 @@
+theta: 0:5:45
+
+depthrange = [-80, 720];
+depthStep = 5; 

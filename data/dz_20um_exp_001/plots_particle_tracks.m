@@ -6,7 +6,7 @@ trackParCum_ind = row1;
 trackParCum_track_ratio = [];
 %% z
 figure
-for ii = 1:10
+for ii = 1:20
 
 for ImgSeqNum = 2:length(file_names)
     [row2,col2] = find(isnan(parCoordTrajMat(ImgSeqNum:length(file_names):end,1))==0);
@@ -26,15 +26,17 @@ for ImgSeqNum = 2:length(file_names)
 end
 
 
+z_locs = [-180:-20:-620];
+
 subplot(1,2,1)
 hold on
-plot([-180:-20:-360],-(parPosHist))
+plot(z_locs,-(parPosHist))
 axis image
 xlabel('z-height of particle plane')
 ylabel('particle positions')
 subplot(1,2,2)
 hold on
-plot([-180:-20:-360],abs(abs(parPosHist)-abs([-180:-20:-360])))
+plot(z_locs,abs(abs(parPosHist)-abs(z_locs)))
 axis image
 xlabel('z-height of particle plane')
 ylabel('absolute position error')
