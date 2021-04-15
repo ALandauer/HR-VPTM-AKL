@@ -6,7 +6,7 @@ init_config = load('C:\Users\akl1\Desktop\LFM\local\data\Shear_synthetic_volume\
 %%
 disp('%%%%% Compute tracked cumulative displacements %%%%%'); fprintf('\n');
 parCoordTrajMat = cell2mat(parCoordTraj);
-clear disp_A2BCum* RMSD_* parCoordA parCoordB parCoordACum parCoordBCum parPosHist parCoordA_GT
+clear disp_A2BCum* RMSD_disp* parCoordA parCoordB parCoordACum parCoordBCum parPosHist parCoordA_GT
 
 [row1,col1] = find(isnan(parCoordTrajMat(1:length(file_names):end,1))==0);
 trackParCum_ind = row1;
@@ -39,7 +39,7 @@ for ImgSeqNum = 2:length(file_names)
     y0 = parCoordA_GT{ImgSeqNum-1};
     y1 = parCoordA_GT{ImgSeqNum-1};
     
-    y1(:,1) = y1(:,1)+(y1(:,3)+(310)/2)*dy;
+    y1(:,1) = y1(:,1)+(y1(:,3)+(302)/2)*dy;
     y1(:,2) = y1(:,2);
     y1(:,3) = y1(:,3);
     parCoordBCum_GT{ImgSeqNum-1} = y1;
@@ -86,13 +86,13 @@ for ii = 1:length(disp_A2BCum_exp)
     RMSD_disp_y(ii,1) = sqrt(sum((disp_meas_y - disp_imps_y).^2)/N);
     RMSD_disp_z(ii,1) = sqrt(sum((disp_meas_z - disp_imps_z).^2)/N);
     
-    mean_err_x(ii,1) = mean((disp_meas_x - disp_imps_x));
-    mean_err_y(ii,1) = mean((disp_meas_y - disp_imps_y));
-    mean_err_z(ii,1) = mean((disp_meas_z - disp_imps_z));
+    mean_disp_err_x(ii,1) = mean((disp_meas_x - disp_imps_x));
+    mean_disp_err_y(ii,1) = mean((disp_meas_y - disp_imps_y));
+    mean_disp_err_z(ii,1) = mean((disp_meas_z - disp_imps_z));
     
-    std_err_x(ii,1) = std((disp_meas_x - disp_imps_x));
-    std_err_y(ii,1) = std((disp_meas_y - disp_imps_y));
-    std_err_z(ii,1) = std((disp_meas_z - disp_imps_z));
+    std_disp_err_x(ii,1) = std((disp_meas_x - disp_imps_x));
+    std_disp_err_y(ii,1) = std((disp_meas_y - disp_imps_y));
+    std_disp_err_z(ii,1) = std((disp_meas_z - disp_imps_z));
     
 end
 
@@ -101,7 +101,7 @@ end
 x_lbl = 'Applied strain';
 
 figure
-shadedErrorBar(deform_func,mean_err_x,RMSD_disp_x,'g-x',1)
+shadedErrorBar(-deform_func,mean_disp_err_x,RMSD_disp_x,'g-x',1)
 % shadedErrorBar(imps_disp,mean_cum_disp(:,2),std_cum_disp(:,2))
 % xlabel('Noise level')
 xlabel(x_lbl)
@@ -109,10 +109,10 @@ ylabel('Error level, um')
 % axis image
 
 hold on
-shadedErrorBar(deform_func,mean_err_y,RMSD_disp_y,'b:*',1)
+shadedErrorBar(-deform_func,mean_disp_err_y,RMSD_disp_y,'b:*',1)
 % shadedErrorBar(imps_disp,mean_cum_disp(:,1),std_cum_disp(:,1))
 % axis image
-shadedErrorBar(deform_func,mean_err_z,RMSD_disp_z,'r-.+',1)
+shadedErrorBar(-deform_func,mean_disp_err_z,RMSD_disp_z,'r-.+',1)
 % shadedErrorBar(imps_disp,mean_cum_disp(:,3),std_cum_disp(:,3))
 title('RMSD shaded region')
 % axis image
@@ -144,7 +144,7 @@ for ii = 1:length(disp_A2BCum_exp)
 %     parCoordBCum_vec = parCoordBCum_GT{ii};
     
     sxyz = min([round(0.5*MPTPara.f_o_s),20]);%.*MPTPara.axesScale; % Step size for griddata
-    smoothness = 0;%1e-3; % Smoothness for regularization; "smoothness=0" means no regularization
+    smoothness = 5e-2; % Smoothness for regularization; "smoothness=0" means no regularization
     
     [x_Grid_refB,y_Grid_refB,z_Grid_refB,u_Grid_refB] = ...
         funScatter2Grid3D(parCoordACum_vec(:,1),parCoordACum_vec(:,2),parCoordACum_vec(:,3),disp_A2BCum_vec(:,1),sxyz,smoothness);
@@ -190,49 +190,49 @@ for ii = 1:length(disp_A2BCum_exp)
     eij_GT{ii}{2,3} = 2*reshape(0.5*(F_Grid_refB_Vector_GT(6:9:end)+F_Grid_refB_Vector_GT(8:9:end)),size(x_Grid_refB));
     eij_GT{ii}{2,1} = eij_GT{ii}{1,2}; eij_GT{ii}{3,1} = eij_GT{ii}{1,3}; eij_GT{ii}{3,2} = eij_GT{ii}{2,3};
     
-    mean_strain_err_11(ii,1) = mean(eij_exp{ii}{1,1}(:) - eij_GT{ii}{1,1}(:),'omitnan');
-    mean_strain_err_22(ii,1) = mean(eij_exp{ii}{2,2}(:) - eij_GT{ii}{2,2}(:),'omitnan');
-    mean_strain_err_33(ii,1) = mean(eij_exp{ii}{3,3}(:) - eij_GT{ii}{3,3}(:),'omitnan');
-    mean_strain_err_12(ii,1) = mean(eij_exp{ii}{1,2}(:) - eij_GT{ii}{1,2}(:),'omitnan');
-    mean_strain_err_13(ii,1) = mean(eij_exp{ii}{1,3}(:) - eij_GT{ii}{1,3}(:),'omitnan');
-    mean_strain_err_23(ii,1) = mean(eij_exp{ii}{2,3}(:) - eij_GT{ii}{2,3}(:),'omitnan');
+    mean_strain_err_11(ii,1) = mean(eij_exp{ii}{1,1}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,1}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    mean_strain_err_22(ii,1) = mean(eij_exp{ii}{2,2}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{2,2}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    mean_strain_err_33(ii,1) = mean(eij_exp{ii}{3,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{3,3}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    mean_strain_err_12(ii,1) = mean(eij_exp{ii}{1,2}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,2}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    mean_strain_err_13(ii,1) = mean(eij_exp{ii}{1,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,3}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    mean_strain_err_23(ii,1) = mean(eij_exp{ii}{2,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{2,3}(11:end-10,11:end-10,3:end-2),'all','omitnan');
     
     mean_strain_13(ii,1) = mean(eij_exp{ii}{1,3}(:),'omitnan');
     mean_strain_23(ii,1) = mean(eij_exp{ii}{2,3}(:),'omitnan');
     
     std_strain_err_11(ii,1) = std(eij_exp{ii}{1,1}(:) - eij_GT{ii}{1,1}(:),'omitnan');
-    std_strain_22(ii,1) = std(eij_exp{ii}{2,2}(:) - eij_GT{ii}{2,2}(:),'omitnan');
-    std_strain_33(ii,1) = std(eij_exp{ii}{3,3}(:) - eij_GT{ii}{3,3}(:),'omitnan');
-    std_strain_12(ii,1) = std(eij_exp{ii}{1,2}(:) - eij_GT{ii}{1,2}(:),'omitnan');
-    std_strain_13(ii,1) = std(eij_exp{ii}{1,3}(:) - eij_GT{ii}{1,3}(:),'omitnan');
-    std_strain_23(ii,1) = std(eij_exp{ii}{2,3}(:) - eij_GT{ii}{2,3}(:),'omitnan');
+    std_strain_err_22(ii,1) = std(eij_exp{ii}{2,2}(:) - eij_GT{ii}{2,2}(:),'omitnan');
+    std_strain_err_33(ii,1) = std(eij_exp{ii}{3,3}(:) - eij_GT{ii}{3,3}(:),'omitnan');
+    std_strain_err_12(ii,1) = std(eij_exp{ii}{1,2}(:) - eij_GT{ii}{1,2}(:),'omitnan');
+    std_strain_err_13(ii,1) = std(eij_exp{ii}{1,3}(:) - eij_GT{ii}{1,3}(:),'omitnan');
+    std_strain_err_23(ii,1) = std(eij_exp{ii}{2,3}(:) - eij_GT{ii}{2,3}(:),'omitnan');
     
     N = numel(eij_exp{ii}{1,1});
-    RMSD_strain_11(ii,1) = sqrt(sum((eij_exp{ii}{1,1}(:) - eij_GT{ii}{1,1}(:)).^2,'omitnan')/N);
-    RMSD_strain_22(ii,1) = sqrt(sum((eij_exp{ii}{2,2}(:) - eij_GT{ii}{2,2}(:)).^2,'omitnan')/N);
-    RMSD_strain_33(ii,1) = sqrt(sum((eij_exp{ii}{3,3}(:) - eij_GT{ii}{3,3}(:)).^2,'omitnan')/N);
-    RMSD_strain_12(ii,1) = sqrt(sum((eij_exp{ii}{1,2}(:) - eij_GT{ii}{1,2}(:)).^2,'omitnan')/N);
-    RMSD_strain_13(ii,1) = sqrt(sum((eij_exp{ii}{1,3}(:) - eij_GT{ii}{1,3}(:)).^2,'omitnan')/N);
-    RMSD_strain_23(ii,1) = sqrt(sum((eij_exp{ii}{2,3}(:) - eij_GT{ii}{2,3}(:)).^2,'omitnan')/N);
+    RMSD_strain_11(ii,1) = sqrt(sum((eij_exp{ii}{1,1}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,1}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
+    RMSD_strain_22(ii,1) = sqrt(sum((eij_exp{ii}{2,2}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{2,2}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
+    RMSD_strain_33(ii,1) = sqrt(sum((eij_exp{ii}{3,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{3,3}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
+    RMSD_strain_12(ii,1) = sqrt(sum((eij_exp{ii}{1,2}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,2}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
+    RMSD_strain_13(ii,1) = sqrt(sum((eij_exp{ii}{1,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,3}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
+    RMSD_strain_23(ii,1) = sqrt(sum((eij_exp{ii}{2,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{2,3}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
     
 end
 %%
 figure
-shadedErrorBar(deform_func,mean_strain_err_11,RMSD_strain_11,'g-x',1)
+shadedErrorBar(-deform_func,mean_strain_err_11,RMSD_strain_11,'g-x',1)
 % shadedErrorBar(imps_disp,mean_cum_disp(:,2),std_cum_disp(:,2))
 % xlabel('Noise level')
 hold on
-shadedErrorBar(deform_func,mean_strain_err_22,RMSD_strain_22,'b-*',1)
+shadedErrorBar(-deform_func,mean_strain_err_22,RMSD_strain_22,'b-*',1)
 % shadedErrorBar(imps_disp,mean_cum_disp(:,1),std_cum_disp(:,1))
 % axis image
-shadedErrorBar(deform_func,mean_strain_err_33,RMSD_strain_33,'r-+',1)
+shadedErrorBar(-deform_func,mean_strain_err_33,RMSD_strain_33,'r-+',1)
 % shadedErrorBar(imps_disp,mean_cum_disp(:,3),std_cum_disp(:,3))
 
-shadedErrorBar(deform_func,mean_strain_err_12,RMSD_strain_12,'m-.o',1)
-shadedErrorBar(deform_func,mean_strain_err_13,RMSD_strain_13,'y-.s',1)
-shadedErrorBar(deform_func,mean_strain_err_23,RMSD_strain_23,'k-.^',1)
+shadedErrorBar(-deform_func,mean_strain_err_12,RMSD_strain_12,'m-.o',1)
+shadedErrorBar(-deform_func,mean_strain_err_13,RMSD_strain_13,'y-.s',1)
+shadedErrorBar(-deform_func,mean_strain_err_23,RMSD_strain_23,'k-.^',1)
 title('RMSD shaded region')
 xlabel(x_lbl)
 ylabel('Strain error')
 
-title('Vol conserving tension; RMSD shaded region')
+title('Shear; RMSD shaded region')

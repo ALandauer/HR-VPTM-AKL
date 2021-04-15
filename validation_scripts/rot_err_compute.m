@@ -120,7 +120,7 @@ for ii = 1:length(disp_A2BCum_exp)
 %     parCoordBCum_vec = parCoordBCum_GT{ii};
     
     sxyz = min([round(0.5*MPTPara.f_o_s),20]);%.*MPTPara.axesScale; % Step size for griddata
-    smoothness = 0;%1e-3; % Smoothness for regularization; "smoothness=0" means no regularization
+    smoothness = 5e-2;%1e-3; % Smoothness for regularization; "smoothness=0" means no regularization
     
     [x_Grid_refB,y_Grid_refB,z_Grid_refB,u_Grid_refB] = ...
         funScatter2Grid3D(parCoordACum_vec(:,1),parCoordACum_vec(:,2),parCoordACum_vec(:,3),disp_A2BCum_vec(:,1),sxyz,smoothness);
@@ -166,27 +166,30 @@ for ii = 1:length(disp_A2BCum_exp)
     eij_GT{ii}{2,3} = reshape(0.5*(F_Grid_refB_Vector_GT(6:9:end)+F_Grid_refB_Vector_GT(8:9:end)),size(x_Grid_refB));
     eij_GT{ii}{2,1} = eij_GT{ii}{1,2}; eij_GT{ii}{3,1} = eij_GT{ii}{1,3}; eij_GT{ii}{3,2} = eij_GT{ii}{2,3};
     
-    mean_strain_err_11(ii,1) = mean(eij_exp{ii}{1,1}(:) - eij_GT{ii}{1,1}(:),'omitnan');
-    mean_strain_err_22(ii,1) = mean(eij_exp{ii}{2,2}(:) - eij_GT{ii}{2,2}(:),'omitnan');
-    mean_strain_err_33(ii,1) = mean(eij_exp{ii}{3,3}(:) - eij_GT{ii}{3,3}(:),'omitnan');
-    mean_strain_err_12(ii,1) = mean(eij_exp{ii}{1,2}(:) - eij_GT{ii}{1,2}(:),'omitnan');
-    mean_strain_err_13(ii,1) = mean(eij_exp{ii}{1,3}(:) - eij_GT{ii}{1,3}(:),'omitnan');
-    mean_strain_err_23(ii,1) = mean(eij_exp{ii}{2,3}(:) - eij_GT{ii}{2,3}(:),'omitnan');
+    mean_strain_err_11(ii,1) = mean(eij_exp{ii}{1,1}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,1}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    mean_strain_err_22(ii,1) = mean(eij_exp{ii}{2,2}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{2,2}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    mean_strain_err_33(ii,1) = mean(eij_exp{ii}{3,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{3,3}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    mean_strain_err_12(ii,1) = mean(eij_exp{ii}{1,2}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,2}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    mean_strain_err_13(ii,1) = mean(eij_exp{ii}{1,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,3}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    mean_strain_err_23(ii,1) = mean(eij_exp{ii}{2,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{2,3}(11:end-10,11:end-10,3:end-2),'all','omitnan');
+    
+    mean_strain_13(ii,1) = mean(eij_exp{ii}{1,3}(:),'omitnan');
+    mean_strain_23(ii,1) = mean(eij_exp{ii}{2,3}(:),'omitnan');
     
     std_strain_err_11(ii,1) = std(eij_exp{ii}{1,1}(:) - eij_GT{ii}{1,1}(:),'omitnan');
-    std_strain_22(ii,1) = std(eij_exp{ii}{2,2}(:) - eij_GT{ii}{2,2}(:),'omitnan');
-    std_strain_33(ii,1) = std(eij_exp{ii}{3,3}(:) - eij_GT{ii}{3,3}(:),'omitnan');
-    std_strain_12(ii,1) = std(eij_exp{ii}{1,2}(:) - eij_GT{ii}{1,2}(:),'omitnan');
-    std_strain_13(ii,1) = std(eij_exp{ii}{1,3}(:) - eij_GT{ii}{1,3}(:),'omitnan');
-    std_strain_23(ii,1) = std(eij_exp{ii}{2,3}(:) - eij_GT{ii}{2,3}(:),'omitnan');
+    std_strain_err_22(ii,1) = std(eij_exp{ii}{2,2}(:) - eij_GT{ii}{2,2}(:),'omitnan');
+    std_strain_err_33(ii,1) = std(eij_exp{ii}{3,3}(:) - eij_GT{ii}{3,3}(:),'omitnan');
+    std_strain_err_12(ii,1) = std(eij_exp{ii}{1,2}(:) - eij_GT{ii}{1,2}(:),'omitnan');
+    std_strain_err_13(ii,1) = std(eij_exp{ii}{1,3}(:) - eij_GT{ii}{1,3}(:),'omitnan');
+    std_strain_err_23(ii,1) = std(eij_exp{ii}{2,3}(:) - eij_GT{ii}{2,3}(:),'omitnan');
     
     N = numel(eij_exp{ii}{1,1});
-    RMSD_strain_11(ii,1) = sqrt(sum((eij_exp{ii}{1,1}(:) - eij_GT{ii}{1,1}(:)).^2,'omitnan')/N);
-    RMSD_strain_22(ii,1) = sqrt(sum((eij_exp{ii}{2,2}(:) - eij_GT{ii}{2,2}(:)).^2,'omitnan')/N);
-    RMSD_strain_33(ii,1) = sqrt(sum((eij_exp{ii}{3,3}(:) - eij_GT{ii}{3,3}(:)).^2,'omitnan')/N);
-    RMSD_strain_12(ii,1) = sqrt(sum((eij_exp{ii}{1,2}(:) - eij_GT{ii}{1,2}(:)).^2,'omitnan')/N);
-    RMSD_strain_13(ii,1) = sqrt(sum((eij_exp{ii}{1,3}(:) - eij_GT{ii}{1,3}(:)).^2,'omitnan')/N);
-    RMSD_strain_23(ii,1) = sqrt(sum((eij_exp{ii}{2,3}(:) - eij_GT{ii}{2,3}(:)).^2,'omitnan')/N);
+    RMSD_strain_11(ii,1) = sqrt(sum((eij_exp{ii}{1,1}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,1}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
+    RMSD_strain_22(ii,1) = sqrt(sum((eij_exp{ii}{2,2}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{2,2}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
+    RMSD_strain_33(ii,1) = sqrt(sum((eij_exp{ii}{3,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{3,3}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
+    RMSD_strain_12(ii,1) = sqrt(sum((eij_exp{ii}{1,2}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,2}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
+    RMSD_strain_13(ii,1) = sqrt(sum((eij_exp{ii}{1,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{1,3}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
+    RMSD_strain_23(ii,1) = sqrt(sum((eij_exp{ii}{2,3}(11:end-10,11:end-10,3:end-2) - eij_GT{ii}{2,3}(11:end-10,11:end-10,3:end-2)).^2,'all','omitnan')/N);
     
 end
 

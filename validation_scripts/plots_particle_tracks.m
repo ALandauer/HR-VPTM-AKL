@@ -40,18 +40,3 @@ xlabel('z-height of particle plane')
 ylabel('absolute position error')
 end
 legend('particle# 1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','19','20')
-
-
-
-
-% % % parCoord_from_pisson_disk
-% % % parCoord_from_localization
-% % % 
-% % % matches_A2B = f_track_nearest_neighbour3( parCoord_from_pisson_disk, parCoord_from_localization, Inf )
-% % % [track_A2B, u_A2B] = funCompDisp3(parCoord_from_pisson_disk, parCoord_from_localization, matches_A2B, 0);
-
-
-
-
-
-
