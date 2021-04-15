@@ -21,9 +21,7 @@
 % [5] https://www.mathworks.com/matlabcentral/fileexchange/77347-gridded-interpolation-and-gradients-of-3d-scattered-data
 % [6] https://www.mathworks.com/matlabcentral/fileexchange/61436-regularizend
 % -----------------------------------------------
-% Author: Jin Yang
-% Contact and support: jyang526@wisc.edu -or- aldicdvc@gmail.com
-% Date: 2020.12.
+% Author: Jin Yang (jyang526@wisc.edu) and Alex Landauer (landauer@brown.edu)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
@@ -35,7 +33,7 @@ ImgSeqNum=1; [file_names,Img] = funReadImage3([data_folder,data_subfolder,fileNa
 try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
 
 MPTPara.xRange = [0,size(Img{1},1)-1]*MPTPara.axesScale(1);
-MPTPara.yRange = [0,size(Img{1},2)-1]*MPTPara.axesScale(1);
+MPTPara.yRange = [0,size(Img{1},2)-1]*MPTPara.axesScale(2);
 
 %%%%% Update MPTPara %%%%%
 MPTPara.gridxyzROIRange.gridx = [1,size(Img{1},1)];
@@ -169,7 +167,8 @@ disp('%%%%%% Detect particles: Done! %%%%%%'); fprintf('\n');
 parCoord_prev = cell(length(file_names)-1,1);  parCoord_prev{1} = parCoordA;
 track_A2B_prev = cell(length(file_names)-1,1); track_B2A_prev = cell(length(file_names)-1,1);
 uvw_B2A_prev = cell(length(file_names)-1,1);
-
+resultDisp = cell(length(file_names)-1,1);
+resultDefGrad = cell(length(file_names)-1,1);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
@@ -184,7 +183,7 @@ for ImgSeqNum = 2 : length(file_names)  % "ImgSeqNum" is the frame index
     try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
     
     %%%%% Trial_MPT_tracking %%%%%
-    [parCoordB_temp,uvw_B2A_temp,~,~,track_A2B_temp,track_B2A_temp,beadParam_all] = fun_TrialMPT_3D_HardPar( ...
+    [parCoordB_temp,uvw_B2A_temp,resultDisp{ImgSeqNum-1},resultDefGrad{ImgSeqNum-1},track_A2B_temp,track_B2A_temp,beadParam_all] = fun_TrialMPT_3D_HardPar( ...
         ImgSeqNum,Img{2},BeadPara,beadParam_all,MPTPara,parCoord_prev{ImgSeqNum-1},parCoord_prev(2:end),uvw_B2A_prev);
     
     %%%%% Store results %%%%%
@@ -213,8 +212,8 @@ axis([2,length(file_names),0,1]);
 
 %%%%% Save results %%%%%
 disp('%%%%%% Trial-MPT 3D hard particle tracking: Done! %%%%%%'); fprintf('\n');
-results_file_names = 'results_3D_hardpar.mat';
-save(results_file_names,'parCoord_prev','uvw_B2A_prev','track_A2B_prev','track_B2A_prev');
+results_file_names = fullfile('results',['results_3D_',file_names{1}(1:end-4),'.mat']);
+save(results_file_names,'parCoord_prev','uvw_B2A_prev','track_A2B_prev','track_B2A_prev','resultDisp','resultDefGrad','beadParam_all');
 
 
 
@@ -275,7 +274,8 @@ trajInd = 0; % index of trajectory segments
 for tempk = 1 : size(parCoord_prev,1)  % Find trajectories passing through particles in frame #tempk
     
     parCoordCurr = parCoord_prev{tempk}; % Find trajectories passing parCoordCurr
-    clear parCoordTrajCurr; parCoordTrajCurr = cell(size(parCoordCurr,1),1); % Initialize a cell structure to store #tempk trajectories
+    clear parCoordTrajCurr; 
+    parCoordTrajCurr = cell(size(parCoordCurr,1),1); % Initialize a cell structure to store #tempk trajectories
     
     % Add particles in frame #tempk to "parCoordTrajCurr"
     for tempj = 1:length(parCoordCurr)
@@ -343,7 +343,6 @@ for tempi = 1 : size(parCoordTraj,1)
 end
 
 %%%%% Try to merge trajectory segments by extrapolating the particle position %%%%%
-hbar = waitbar(0,'wait');
 for tempMergeTime = 1:4 % Try to merge four times
     
     for tempm = 0:maxGapTrajSeqLength % tempm is the # of missing particles between trajectory segments
@@ -354,12 +353,6 @@ for tempMergeTime = 1:4 % Try to merge four times
             [row1,~] = find( parCoordTrajPara(:,2)<size(parCoord_prev,1)+1-tempk & parCoordTrajPara(:,2)>0 ); % Find trajectory setments with length requirement
             
             for tempi = 1:length(row) % For each trajectory segment whose "length==tempk"
-                
-                tempWatibar = tempi/length(row)/4/(maxGapTrajSeqLength+1)/((size(parCoord_prev,1)-1)-minTrajSegLength+1) + ...
-                    ((size(parCoord_prev,1)-1)-tempk+1)/4/(maxGapTrajSeqLength+1)/((size(parCoord_prev,1)-1)-minTrajSegLength+1) + ...
-                    (tempm)/4/(maxGapTrajSeqLength+1) + (tempMergeTime-1)/4;
-                
-                waitbar(tempWatibar);
                 
                 parCoordTrajMat = cell2mat( parCoordTraj );
                 parCoordTrajCurr = parCoordTraj{row(tempi)}; % For each trajectory segment whose "length==tempk"
@@ -447,14 +440,11 @@ for tempMergeTime = 1:4 % Try to merge four times
                 
             end % End of "for each trajectory segment whose "length==tempk" "
             
-            
-            
         end % End of "for trajectory segments with length [(size(parCoord_prev,1)-1) : -1 : minTrajSegLength]"
         
     end % End of tempm
     
 end % End of "for tempMergeTime = 1:5 % Try to merge four times"
-close(hbar);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -571,8 +561,8 @@ for ImgSeqNum = 2:length(file_names)
     parCoordBCum{ImgSeqNum-1} = parCoordB(trackParCum_ind,:);
     disp_A2BCum{ImgSeqNum-1} = parCoordBCum{ImgSeqNum-1} - parCoordACum{ImgSeqNum-1};
     
-    parNum = find(trackParCum_ind == 10);
-    parPosHist(ImgSeqNum-1) = parCoordBCum{ImgSeqNum-1}(parNum,3)'; 
+%     parNum = find(trackParCum_ind == 10);
+%     parPosHist(ImgSeqNum-1) = parCoordBCum{ImgSeqNum-1}(parNum,3)'; 
     
 end
 
@@ -611,10 +601,6 @@ for ii = 1:length(disp_A2BCum)
     RMSD_y(ii,1) = sqrt(sum((disp_meas_y - disp_imps_y).^2)/N);
     RMSD_x(ii,1) = sqrt(sum((disp_meas_x - disp_imps_x).^2)/N);
     RMSD_z(ii,1) = sqrt(sum((disp_meas_z - disp_imps_z).^2)/N);
-    
-    sterr_y(ii,1) = std_cum_disp(ii,1)/sqrt(N);
-    sterr_x(ii,1) = std_cum_disp(ii,2)/sqrt(N);
-    sterr_z(ii,1) = std_cum_disp(ii,3)/sqrt(N);
 end
 
 x_lbl = 'Experimental imposed disp z';
@@ -623,7 +609,7 @@ imps_disp = -20*[1:length(mean_cum_disp)]';
 % imps_disp = [0.022,0.025,0.028,0.033,0.040,0.050,0.066,0.100,0.200];
 figure
 subplot(1,3,1)
-shadedErrorBar(imps_disp,mean_cum_disp(:,2),sterr_x)
+shadedErrorBar(imps_disp,mean_cum_disp(:,2),RMSD_x)
 % shadedErrorBar(imps_disp,mean_cum_disp(:,2),std_cum_disp(:,2))
 % xlabel('Noise level')
 xlabel(x_lbl)
@@ -631,7 +617,7 @@ ylabel('Measured displacement in x, um')
 % axis image
 
 subplot(1,3,2)
-shadedErrorBar(imps_disp,mean_cum_disp(:,1),sterr_y)
+shadedErrorBar(imps_disp,mean_cum_disp(:,1),RMSD_y)
 % shadedErrorBar(imps_disp,mean_cum_disp(:,1),std_cum_disp(:,1))
 xlabel(x_lbl)
 % xlabel('Noise level')
@@ -639,13 +625,11 @@ ylabel('Measured displacement in y, um')
 % axis image
 
 subplot(1,3,3)
-shadedErrorBar(imps_disp,mean_cum_disp(:,3),sterr_z)
+shadedErrorBar(imps_disp,mean_cum_disp(:,3),RMSD_z)
 % shadedErrorBar(imps_disp,mean_cum_disp(:,3),std_cum_disp(:,3))
-hold on
-plot(imps_disp,imps_disp,'b--')
 xlabel(x_lbl)
 ylabel('Measured displacement in z, um')
-title('St Err shaded region')
+title('RMSD shaded region')
 % axis image
 
 %%
@@ -654,7 +638,7 @@ disp('Modify codes below to plot interpolated displacements and strains on a uni
 % pause;
 clear disp_A2BCum parCoordA parCoordB parCoordACum parCoordBCum trackParCum_ind
 
-ImgSeqNum = 3; % Frame #
+ImgSeqNum = 2; % Frame #
 
 parCoordTrajMat = cell2mat( parCoordTraj );
 
@@ -677,9 +661,9 @@ disp_A2BCum = parCoordBCum - parCoordACum;
 sxyz = min([round(0.5*MPTPara.f_o_s),10]).*MPTPara.axesScale; % Step size for griddata
 smoothness = 0.1;%1e-3; % Smoothness for regularization; "smoothness=0" means no regularization
 
-[x_Grid_refB,y_Grid_refB,z_Grid_refB,u_Grid_refB]=funScatter2Grid3D(parCoordBCum(:,1),parCoordBCum(:,2),parCoordBCum(:,3),disp_A2BCum(:,1),sxyz,smoothness);
-[~,~,~,v_Grid_refB]=funScatter2Grid3D(parCoordBCum(:,1),parCoordBCum(:,2),parCoordBCum(:,3),disp_A2BCum(:,2),sxyz,smoothness);
-[~,~,~,w_Grid_refB]=funScatter2Grid3D(parCoordBCum(:,1),parCoordBCum(:,2),parCoordBCum(:,3),disp_A2BCum(:,3),sxyz,smoothness);
+[x_Grid_refB,y_Grid_refB,z_Grid_refB,u_Grid_refB]=funScatter2Grid3D(parCoordACum(:,1),parCoordACum(:,2),parCoordACum(:,3),disp_A2BCum(:,1),sxyz,smoothness);
+[~,~,~,v_Grid_refB]=funScatter2Grid3D(parCoordACum(:,1),parCoordACum(:,2),parCoordACum(:,3),disp_A2BCum(:,2),sxyz,smoothness);
+[~,~,~,w_Grid_refB]=funScatter2Grid3D(parCoordACum(:,1),parCoordACum(:,2),parCoordACum(:,3),disp_A2BCum(:,3),sxyz,smoothness);
 
 % Apply ROI image mask
 % [u_Grid_refB, v_Grid_refB] = funRmROIOutside(x_Grid_refB,y_Grid_refB,MPTPara.ImgRefMask,u_Grid_refB,v_Grid_refB);
@@ -704,7 +688,7 @@ axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
 [coordinatesFEM_refB,elementsFEM_refB] = funMeshSetUp3(x_Grid_refB*axes_scale(1),y_Grid_refB*axes_scale(2),z_Grid_refB*axes_scale(3));
 
 %%%%% Cone plot grid data: displacement %%%%%
-Plotdisp_show3(uvw_Grid_refB_Vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
+%Plotdisp_show3(uvw_Grid_refB_Vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
 
 %%%%% Cone plot grid data: infinitesimal strain %%%%%
 Plotstrain_show3(F_Grid_refB_Vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor',1,tstep);
