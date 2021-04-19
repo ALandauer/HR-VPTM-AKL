@@ -13,23 +13,28 @@
 %       [Jin's Trial-MPT paper]
 %
 
-clear all,close all
+clear, close all
 
 %% Add dependecy dirs to path
 import2ws();
 
 
 %% Specify data to import
+% data_folder = ['.',filesep,'data',filesep]; %main data directory
+% data_subfolder = ['dz_002_20210415',filesep]; %subfolder for a specific experiment
+% fileNamePrefix = 'dz_*';
+
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['dz_20um_exp_001',filesep]; %subfolder for a specific experiment
+data_subfolder = ['dz_002_20210415',filesep]; %subfolder for a specific experiment
 fileNamePrefix = 'dz_*';
+
 
 %% ======================= SET-UP SECTION ============================
 
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-800, 260];
+depthRange = [-80, 720];
 % axial slice step (in um)
 depthStep = 5;
 
@@ -47,7 +52,6 @@ MPTPara.depthRange = depthRange; % unit: um/px
 MPTPara.tstep = 1; % unit: us
 
 MPTPara.mode = 'inc'; % {'inc': incremental mode; 'cum': cumulative mode}
-MPTPara.parType = 'hard'; % {'hard': hard particle; 'soft': soft particle}
 
 % Bead detection method
 BeadPara.detectionMethod = 3; % {1-TPT code; 2-regionprops; 3-LFM}
@@ -157,9 +161,7 @@ end
 %summarize setup
 disp('*************************************************************');
 disp('Starting Trial-MPT...');
-disp(['Dimention: ',num2str(MPTPara.DIM)]);
 disp(['Tracking mode: ',MPTPara.mode]);
-disp(['Particle type: ',MPTPara.parType]);
 disp('*************************************************************'); fprintf('\n');
 
 
@@ -191,48 +193,32 @@ BeadPara.randNoise = 1e-7;      % By default
 BeadPara.numBeadsPSF = 1;
 BeadPara.fileFolder = fileFolder; %folder for raw images
 BeadPara.PSF = [];              % PSF function; Example: PSF = fspecial('disk', BeadPara.beadSize-1 ); % Disk blur
-BeadPara.distMissing = 15;       % Distance threshold to check whether particle has a match or not 
+BeadPara.distMissing = 70;       % Distance threshold to check whether particle has a match or not 
 BeadPara.color = 'white';       % By default
 
 % Trial-MPT tracking
 
 %%%%% Trial-MPT Parameter %%%%%
 MPTPara.f_o_s = Inf;              % Size of search field: max(|u|,|v|,|w|)
-MPTPara.n_neighborsMax = 8;     % Max # of neighboring particles
+MPTPara.edge_width = 20;          %width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
+MPTPara.n_neighborsMax = 16;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
-MPTPara.smoothness = 1e-1;       % Coefficient of regularization
-MPTPara.outlrThres = 5;          % Threshold for removing outliers in MPT
+MPTPara.smoothness = 0.05;       % Coefficient of regularization
+MPTPara.outlrThres = 3;          % Threshold for removing outliers in MPT
 MPTPara.maxIterNum = 8;         % Max ADMM iteration number
-MPTPara.iterStopThres = 1e-2;    % ADMM iteration stopping threshold
-MPTPara.strain_n_neighbors = 8; % # of neighboring particles used in strain gauge
+MPTPara.iterStopThres = 1e-3;    % ADMM iteration stopping threshold
+MPTPara.strain_n_neighbors = 14; % # of neighboring particles used in strain gauge
 MPTPara.strain_f_o_s = Inf;       % Size of virtual strain gauge
 MPTPara.usePrevResults = 0;      % Whether use previous results or not: 0-no; 1-yes;
 
 %%%% Postprocessing: merge trajectory segments %%%%%
-distThres = 18; % distance threshold to connect split trajectory segments
+distThres = 55; % distance threshold to connect split trajectory segments
 extrapMethod = 'pchip';  % extrapolation scheme to connect split trajectory segments
                          % suggestion: 'nearest' for Brownian motion
-minTrajSegLength = 12;    % the minimum length of trajectory segment that will be extrapolated
+minTrajSegLength = 10;    % the minimum length of trajectory segment that will be extrapolated
 maxGapTrajSeqLength = 1; % the max frame# gap between connected trajectory segments
 
 %%%%% Run Trial-MPT tracking %%%%%
-if strcmpi(MPTPara.mode,'inc')
-    if strcmpi(MPTPara.parType,'hard')
-        run_Trial_MPT_3D_hardpar_inc;
-    elseif strcmpi(MPTPara.parType,'soft')
-        disp('not yet implemented');
-    else
-        disp('Please enter a valid particle type')
-    end
-elseif strcmpi(MPTPara.mode,'cum')
-    if strcmpi(MPTPara.parType,'hard')
-        run_Trial_MPT_3D_hardpar_cum;
-    elseif strcmpi(MPTPara.parType,'soft')
-        disp('not yet implemented');
-    else
-        disp('Please enter a valid particle type')
-    end
-else
-    disp('Please enter a valid mode')
-end
+run_Trial_MPT_3D_hardpar_inc;
+

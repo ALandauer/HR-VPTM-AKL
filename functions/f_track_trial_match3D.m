@@ -111,7 +111,6 @@ parNotMissingIndA = [1:size(parCoordA,1)]'; % Indices of particles in image A th
 parNotMissingIndBCurr = [1:size(parCoordBCurr,1)]'; % Indices of particles in image B that have matches in image A
 matchRatioEqualsOneTime = 0; % How many times the match raio equals one
 
-
 %%%%% Use previous results for a new frame %%%%%
 if ImgSeqNum >= 2 && usePrevResults == 1
     % disp('Use previous results as an initial estimate');
@@ -164,11 +163,11 @@ while iterNum < maxIterNum
             matches_A2B = [[1:length(matches_A2B_)]',matches_A2B_];
             
             %try other methods if TPT doesn't find enough matches
-            if length(matches_A2B(matches_A2B(:,2) > 0,:)) < length(parCoordA)/3
+            if sum(matches_A2B > 0,'all') < length(parCoordA)/6
                 disp('Trying Neighborhood Topology matching')
                 matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors);
             end
-            if length(matches_A2B(matches_A2B(:,2) > 0,:)) < length(parCoordA)/3
+            if sum(matches_A2B > 0) < length(parCoordA)/6
                 disp('Trying Histogram matching')
                 matches_A2B = f_track_hist_match( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp);
             end

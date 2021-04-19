@@ -32,8 +32,8 @@ ImgSeqNum=1; [file_names,Img] = funReadImage3([data_folder,data_subfolder,fileNa
 
 try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
 
-MPTPara.xRange = [0,size(Img{1},1)-1]*MPTPara.axesScale(1);
-MPTPara.yRange = [0,size(Img{1},2)-1]*MPTPara.axesScale(2);
+MPTPara.xRange = [MPTPara.edge_width,size(Img{1},1)-1-MPTPara.edge_width]*MPTPara.axesScale(1);
+MPTPara.yRange = [MPTPara.edge_width,size(Img{1},2)-1-MPTPara.edge_width]*MPTPara.axesScale(2);
 
 %%%%% Update MPTPara %%%%%
 MPTPara.gridxyzROIRange.gridx = [1,size(Img{1},1)];
