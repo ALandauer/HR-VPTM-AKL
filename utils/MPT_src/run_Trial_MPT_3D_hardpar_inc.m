@@ -28,7 +28,9 @@
 %%%%% Load 3D volumetric images %%%%%
 try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end % Open image folder
 
-ImgSeqNum=1; [file_names,Img] = funReadImage3([data_folder,data_subfolder,fileNamePrefix,'.mat'],ImgSeqNum); % Load image
+ImgSeqNum=1; 
+cur_image = [data_folder,data_subfolder,fileNamePrefix,'.mat'];
+[file_names,Img] = funReadImage3(cur_image,ImgSeqNum); % Load image
 
 try if isempty(fileFolder)~=1, cd(fileTrialMPTPath); end; catch; end % Come back to the main path
 
