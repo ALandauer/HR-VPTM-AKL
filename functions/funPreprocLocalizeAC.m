@@ -1,4 +1,4 @@
-function [vol,BeadPara] = funPreprocLocalizeAC(vol_in,BeadPara,cur_image,ImgSeqNum)
+function [vol,BeadPara] = funPreprocLocalizeAC(vol_in,BeadPara,file_names,ImgSeqNum)
 %Function to gather a PSF, run deconv, and collect threshold info
 %
 %--- INPUTS ---
@@ -17,9 +17,13 @@ deconv_thresh = BeadPara.deconvThresh;
 deconv_prefilter = BeadPara.deconvPrefilter;
 deconv_iter = BeadPara.deconvIter;
 fileFolder = BeadPara.fileFolder;
-cur_deconv_img = [cur_image(1:end-4),'_deconv.mat'];
+cur_deconv_img = [fileFolder,filesep,'deconv_imgs',filesep,'deconv_',file_names{ImgSeqNum}];
 
-if BeadPara.saveIntermediates
+if ~exist([fileFolder,filesep,'deconv_imgs'],'dir') 
+   mkdir([fileFolder,filesep,'deconv_imgs'])
+end
+
+if BeadPara.saveIntermediates == 1
     if exist(cur_deconv_img,'file') == 2
         vol_ = load(cur_deconv_img);
         vol=vol_.vol;
@@ -61,7 +65,7 @@ if BeadPara.saveIntermediates
         vol = vol/max(vol(:));
         vol(vol < deconv_thresh) = 0;
         
-        save(cur_deconv_img);
+        save(cur_deconv_img,'vol');
         
     end
     

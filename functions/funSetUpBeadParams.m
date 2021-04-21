@@ -12,6 +12,7 @@ PSF = [];              % PSF function; Example: PSF = fspecial('disk', BeadPara.
 distMissing = 5;       % Distance threshold to check whether particle has a match or not 
 color = 'white';       % By default
 detectionMethod = 1;    % Default
+saveIntermediates = 1;
 
 dccd = [1,1,1];
 abc = [1,1,1];
@@ -58,6 +59,7 @@ addParameter(p,'deconvPrefilter',deconvPrefilter);
 addParameter(p,'deconvIter',deconvIter);
 addParameter(p,'psfSize',psfSize);
 addParameter(p,'fileFolder',fileFolder);
+addParameter(p,'saveIntermediates',saveIntermediates);
 
 parse(p,beadParameter)
 
