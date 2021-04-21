@@ -192,9 +192,10 @@ BeadPara.forloop = 1;           % By default
 BeadPara.randNoise = 1e-7;      % By default
 BeadPara.numBeadsPSF = 1;
 BeadPara.fileFolder = fileFolder; %folder for raw images
-BeadPara.PSF = [];              % PSF function; Example: PSF = fspecial('disk', BeadPara.beadSize-1 ); % Disk blur
-BeadPara.distMissing = 70;       % Distance threshold to check whether particle has a match or not 
-BeadPara.color = 'white';       % By default
+BeadPara.saveIntermediates = 1;   %1 = save and reuse intermediate raw images
+BeadPara.PSF = [];                % PSF function; Example: PSF = fspecial('disk', BeadPara.beadSize-1 ); % Disk blur
+BeadPara.distMissing = 70;        % Distance threshold to check whether particle has a match or not 
+BeadPara.color = 'white';         % By default
 
 % Trial-MPT tracking
 
