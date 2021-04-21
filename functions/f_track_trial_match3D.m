@@ -163,13 +163,17 @@ while iterNum < maxIterNum
             matches_A2B = [[1:length(matches_A2B_)]',matches_A2B_];
             
             %try other methods if TPT doesn't find enough matches
-            if sum(matches_A2B > 0,'all') < length(parCoordA)/6
+            if sum(matches_A2B > 0,'all') < (length(parCoordA)/3 + length(matches_A2B))
                 disp('Trying Neighborhood Topology matching')
                 matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors);
             end
-            if sum(matches_A2B > 0) < length(parCoordA)/6
+            if sum(matches_A2B > 0,'all') < (length(parCoordA)/3 + length(matches_A2B))
                 disp('Trying Histogram matching')
                 matches_A2B = f_track_hist_match( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp);
+            end
+            if sum(matches_A2B > 0,'all') < (length(parCoordA)/3 + length(matches_A2B))
+                disp('Trying 1NN matching')
+                matches_A2B = f_track_nearest_neighbour3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );
             end
             
         else
@@ -180,7 +184,7 @@ while iterNum < maxIterNum
         matches_A2B(matches_A2B(:,2) == 0,:) = [];
         
         if isempty(matches_A2B) == 1
-            n_neighborsMax = round(n_neighborsMax + 3);
+            n_neighborsMax = round(n_neighborsMax + 1);
         else
             matches_A2B = [parNotMissingIndA(matches_A2B(:,1)), parNotMissingIndBCurr(matches_A2B(:,2))];
             [track_A2B, u_A2B] = funCompDisp3(parCoordA, parCoordBCurr, matches_A2B, outlrThres);
