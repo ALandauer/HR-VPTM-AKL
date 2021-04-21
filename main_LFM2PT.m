@@ -25,7 +25,7 @@ import2ws();
 % fileNamePrefix = 'dz_*';
 
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['dz_002_20210415',filesep]; %subfolder for a specific experiment
+data_subfolder = ['dz_exp_0421',filesep]; %subfolder for a specific experiment
 fileNamePrefix = 'dz_*';
 
 
@@ -34,7 +34,7 @@ fileNamePrefix = 'dz_*';
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-80, 720];
+depthRange = [-800, 260];
 % axial slice step (in um)
 depthStep = 5;
 
@@ -201,7 +201,7 @@ BeadPara.color = 'white';         % By default
 
 %%%%% Trial-MPT Parameter %%%%%
 MPTPara.f_o_s = Inf;              % Size of search field: max(|u|,|v|,|w|)
-MPTPara.edge_width = 20;          %width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
+MPTPara.edge_width = 15;          %width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
 MPTPara.n_neighborsMax = 16;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
