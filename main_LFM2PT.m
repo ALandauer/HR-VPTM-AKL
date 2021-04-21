@@ -202,14 +202,14 @@ BeadPara.color = 'white';         % By default
 %%%%% Trial-MPT Parameter %%%%%
 MPTPara.f_o_s = Inf;              % Size of search field: max(|u|,|v|,|w|)
 MPTPara.edge_width = 15;          %width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
-MPTPara.n_neighborsMax = 16;     % Max # of neighboring particles
+MPTPara.n_neighborsMax = 8;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
 MPTPara.smoothness = 0.05;       % Coefficient of regularization
 MPTPara.outlrThres = 3;          % Threshold for removing outliers in MPT
 MPTPara.maxIterNum = 8;         % Max ADMM iteration number
 MPTPara.iterStopThres = 1e-3;    % ADMM iteration stopping threshold
-MPTPara.strain_n_neighbors = 14; % # of neighboring particles used in strain gauge
+MPTPara.strain_n_neighbors = 8; % # of neighboring particles used in strain gauge
 MPTPara.strain_f_o_s = Inf;       % Size of virtual strain gauge
 MPTPara.usePrevResults = 0;      % Whether use previous results or not: 0-no; 1-yes;
 

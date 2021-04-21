@@ -17,7 +17,7 @@ deconv_thresh = BeadPara.deconvThresh;
 deconv_prefilter = BeadPara.deconvPrefilter;
 deconv_iter = BeadPara.deconvIter;
 fileFolder = BeadPara.fileFolder;
-cur_deconv_img = [fileFolder,filesep,'deconv_imgs','deconv_',file_names{ImgSeqNum}];
+cur_deconv_img = [fileFolder,filesep,'deconv_imgs',filesep,'deconv_',file_names{ImgSeqNum}];
 
 if ~exist([fileFolder,filesep,'deconv_imgs'],'dir') 
    mkdir([fileFolder,filesep,'deconv_imgs'])
