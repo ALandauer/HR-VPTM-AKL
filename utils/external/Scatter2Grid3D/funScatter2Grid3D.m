@@ -11,7 +11,7 @@ function [xGrid,yGrid,zGrid,fGrid] = funScatter2Grid3D(varargin)
 %           Gridded coordinates (xGrid,yGrid,zGrid)
 %
 % -----------------------------------------------
-% Author: Jin Yang (jyang526@wisc.edu)
+% Author: Jin Yang (jyang526@wisc.edu), misc updates Alex Landauer (landauer@brown.edu)
 % Date: 06-24-2020
 %
 % Reference
@@ -41,17 +41,17 @@ end
 
 
 % ------ Regularization ------
-if smoothness == 0
-    f_interp = scatteredInterpolant(x,y,z,f,'linear','linear');
+if smoothness <= abs(100*eps)
+    f_interp = scatteredInterpolant(x,y,z,f,'natural','none');
     fGrid = reshape(f_interp(xGrid(:),yGrid(:),zGrid(:)), size(xGrid));
 else
     fGrid = regularizeNd([x,y,z],f,{xList,yList,zList},smoothness);
 end
 
 % ------ Plot and check ------
-%figure, scatter3(xGrid(:),yGrid(:),zGrid(:),ones(length(xGrid(:)),1),fGrid(:)); cb=colorbar;
-% figure, scatter3(xGrid(:),yGrid(:),zGrid(:),ones(length(xGrid(:)),1),fGrid2(:)); cb=colorbar;
-%figure, scatter3(x,y,z,ones(length(x(:)),1),f(:)); cb=colorbar;
+% figure, scatter3(xGrid(:),yGrid(:),zGrid(:),ones(length(xGrid(:)),1),fGrid(:)); cb=colorbar;
+% % figure, scatter3(xGrid(:),yGrid(:),zGrid(:),ones(length(xGrid(:)),1),fGrid2(:)); cb=colorbar;
+% figure, scatter3(x,y,z,ones(length(x(:)),1),f(:)); cb=colorbar;
 
 
 end
@@ -63,6 +63,9 @@ x=[]; y=[]; z=[]; f=[]; sxyz=[]; smoothness=[]; xGrid=[]; yGrid=[]; zGrid=[];
 x=vargin{1}; y=vargin{2}; z=vargin{3}; f=vargin{4};
 try 
     sxyz=vargin{5};
+    if numel(sxyz) == 1
+       sxyz = [sxyz,sxyz,sxyz]; 
+    end
     try
         smoothness=vargin{6};
     catch

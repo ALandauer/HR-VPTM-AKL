@@ -12,14 +12,16 @@ function A = funDerivativeOp3(M,N,L,h)
 % OUTPUT: First order central difference operator
 % 
 % -----------------------------------------------
-% Author: Jin Yang (jyang526@wisc.edu)
+% Author: Jin Yang (jyang526@wisc.edu), misc updates Alex Landauer (landauer@brown.edu)
 % Date: 06-24-2020
 %
 % Reference
 % [1] https://www.mathworks.com/matlabcentral/fileexchange/77019-augmented-lagrangian-digital-volume-correlation-aldvc
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+if numel(h) == 1
+    h = [h,h,h];
+end
 DIM = 3; A = sparse(DIM^2*M*N*L, DIM*M*N*L); sizeA = size(A); 
 
 %% ------ Inside assign values ------
@@ -95,41 +97,4 @@ A(6:9:end,:) = A(6:9:end,:)*(1.0/(2*h(2))) ;
 A(7:9:end,:) = A(7:9:end,:)*(1.0/(2*h(3))) ;
 A(8:9:end,:) = A(8:9:end,:)*(1.0/(2*h(3))) ;
 A(9:9:end,:) = A(9:9:end,:)*(1.0/(2*h(3))) ;
-
-
-%% ------ Bottom plane ------
-% tempz = 1;
-% for tempy = 2:(N-1)
-%     for tempx = 2:(M-1)
-%         
-%         index = tempx + M*(tempy-1) + M*N*(tempz-1); % find the index of the point (tempx,tempy,tempz);
-%         indexNeighbors = index*ones(1,6)+[M,-M,1,-1,M*N,0]; % Change Bottom to be index itself
-%         indexFrow = 9*index*ones(1,9)+[-8:1:0]; % same with inside
-%         indexFcol1 = [3*indexNeighbors(4)*ones(1,3)+[-2:1:0], 3*indexNeighbors(2)*ones(1,3)+[-2:1:0], 3*indexNeighbors(6)*ones(1,3)+[-2:1:0]];
-%         indexFcol2 = [3*indexNeighbors(3)*ones(1,3)+[-2:1:0], 3*indexNeighbors(1)*ones(1,3)+[-2:1:0], 3*indexNeighbors(5)*ones(1,3)+[-2:1:0]];
-%             
-%         indexF1 = sub2ind(sizeA,indexFrow,indexFcol1);
-%         indexF2 = sub2ind(sizeA,indexFrow,indexFcol2);
-%         A(indexF1) = -1; A(indexF2) = 1; A(indexF1(7:9)) = -2; A(indexF2(7:9)) = 2;
-%         
-%     end
-% end
-% 
-% % ------ Top plane ------
-% % tempz = L;
-% for tempy = 2:(N-1)
-%     for tempx = 2:(M-1)
-%         
-%         index = tempx + M*(tempy-1) + M*N*(tempz-1); % find the index of the point (tempx,tempy,tempz);
-%         indexNeighbors = index*ones(1,6)+[M,-M,1,-1,0,-M*N]; % Change Bottom to be index itself
-%         indexFrow = 9*index*ones(1,9)+[-8:1:0]; % same with inside
-%         indexFcol1 = [3*indexNeighbors(4)*ones(1,3)+[-2:1:0], 3*indexNeighbors(2)*ones(1,3)+[-2:1:0], 3*indexNeighbors(6)*ones(1,3)+[-2:1:0]];
-%         indexFcol2 = [3*indexNeighbors(3)*ones(1,3)+[-2:1:0], 3*indexNeighbors(1)*ones(1,3)+[-2:1:0], 3*indexNeighbors(5)*ones(1,3)+[-2:1:0]];
-%             
-%         indexF1 = sub2ind(sizeA,indexFrow,indexFcol1);
-%         indexF2 = sub2ind(sizeA,indexFrow,indexFcol2);
-%         A(indexF1) = -1; A(indexF2) = 1; A(indexF1(7:9)) = -2; A(indexF2(7:9)) = 2;
-%         
-%     end
-% end
 
