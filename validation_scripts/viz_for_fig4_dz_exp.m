@@ -18,8 +18,8 @@ for ImgSeqNum = 2:length(file_names)
     parCoordBCum{ImgSeqNum-1} = parCoordB(trackParCum_ind,:);
     disp_A2BCum{ImgSeqNum-1} = parCoordBCum{ImgSeqNum-1} - parCoordACum{ImgSeqNum-1};
     
-    parNum = find(trackParCum_ind == 10);
-    parPosHist(ImgSeqNum-1) = parCoordBCum{ImgSeqNum-1}(parNum,3)'; 
+%     parNum = find(trackParCum_ind == 10);
+%     parPosHist(ImgSeqNum-1) = parCoordBCum{ImgSeqNum-1}(parNum,3)'; 
     
 end
 
@@ -64,19 +64,21 @@ for ii = 1:length(disp_A2BCum)
     sterr_z(ii,1) = std_cum_disp(ii,3)/sqrt(N);
 end
 
+%%
 x_lbl = 'Experimental imposed disp z';
 % imps_disp = 20*[1:length(mean_cum_disp)]';
 imps_disp = -20*[1:length(mean_cum_disp)]';
 % imps_disp = [0.022,0.025,0.028,0.033,0.040,0.050,0.066,0.100,0.200];
 figure
-shadedErrorBar(imps_disp,mean_cum_disp(:,2),sterr_x,'b-x',1)
+shadedErrorBar(imps_disp-min((imps_disp))-max((imps_disp)),mean_cum_disp(:,2)-min((mean_cum_disp(:,2)))-max((mean_cum_disp(:,2))),sterr_x,'b-x',1)
 hold on
-shadedErrorBar(imps_disp,mean_cum_disp(:,1),sterr_y,'g-*',1)
-shadedErrorBar(imps_disp,mean_cum_disp(:,3),sterr_z,'r-+',1)
+shadedErrorBar(imps_disp-min((imps_disp))-max((imps_disp)),mean_cum_disp(:,1)-min((mean_cum_disp(:,1)))-max((mean_cum_disp(:,1))),sterr_y,'g-*',1)
+shadedErrorBar(imps_disp-min((imps_disp))-max((imps_disp)),mean_cum_disp(:,3)-min((mean_cum_disp(:,3)))-max((mean_cum_disp(:,3))),sterr_z,'r-+',1)
 % shadedErrorBar(imps_disp,mean_cum_disp(:,3),std_cum_disp(:,3))
 hold on
-plot(imps_disp,imps_disp,'b--')
+plot(imps_disp-min((imps_disp))-max((imps_disp)),imps_disp-min((imps_disp))-max((imps_disp)),'k--')
 xlabel(x_lbl)
 ylabel('Measured displacement in z, um')
 title('St Err shaded region')
+axis([-15,425,-15,425])
 % axis image
