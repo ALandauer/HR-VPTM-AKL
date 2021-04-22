@@ -215,6 +215,10 @@ axis([2,length(file_names),0,1]);
 %%%%% Save results %%%%%
 disp('%%%%%% Trial-MPT 3D hard particle tracking: Done! %%%%%%'); fprintf('\n');
 results_file_names = fullfile('results',['results_3D_',file_names{1}(1:end-4),'.mat']);
+if ~exist('results','dir') 
+   mkdir('results')
+end
+
 save(results_file_names,'parCoord_prev','uvw_B2A_prev','track_A2B_prev','track_B2A_prev','resultDisp','resultDefGrad','beadParam_all');
 
 
@@ -633,6 +637,7 @@ xlabel(x_lbl)
 ylabel('Measured displacement in z, um')
 title('RMSD shaded region')
 % axis image
+
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
