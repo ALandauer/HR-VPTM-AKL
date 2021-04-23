@@ -169,11 +169,11 @@ while iterNum < maxIterNum
             end
             if sum(matches_A2B > 0,'all') < (length(parCoordA)/3 + length(matches_A2B))
                 disp('Trying Histogram matching')
-                matches_A2B = f_track_hist_match( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp);
+                matches_A2B = f_track_hist_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp);
             end
             if sum(matches_A2B > 0,'all') < (length(parCoordA)/3 + length(matches_A2B))
                 disp('Trying 1NN matching')
-                matches_A2B = f_track_nearest_neighbour3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );
+                matches_A2B = f_track_nearest_neighbor3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );
             end
             
         else
