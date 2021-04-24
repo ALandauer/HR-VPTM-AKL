@@ -119,7 +119,7 @@ resultDispInc = resultDisp;
 resultDefGradInc = resultDefGrad;
 save(results_file_names_Eul,'resultDispInc','resultDefGradInc','u_total','F_total','beadParam_all','MPTPara');
 
-disp('%%%%% Cumulated reuslts saved %%%%%'); fprintf('\n');
+disp('%%%%% Cumulated Eulerian reuslts saved %%%%%'); fprintf('\n');
 
 %% plotting options
 disp('%%%%% Optional plotting code - modify as needed %%%%%'); fprintf('\n');

@@ -299,7 +299,10 @@ axis([2,length(file_names),0,1]);
 
 %%%%% Plot tracked cumulative displacement field %%%%%
 %%%%% Make a video %%%%%
-v = VideoWriter('video_3D_inc_cum.avi'); v.FrameRate = 5; open(v); figure,
+if ~exist('results','dir') 
+   mkdir('results')
+end
+v = VideoWriter('results/video_3D_inc_cum.avi'); v.FrameRate = 5; open(v); figure,
 for ImgSeqNum = 2:length(file_names)
     
     parCoordA = parCoordTrajMat(1:length(file_names):end,1:3);
@@ -323,6 +326,7 @@ for ImgSeqNum = 2:length(file_names)
     
 end
 close(v);
+
 
 
 %%
@@ -381,11 +385,25 @@ axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
 [coordinatesFEM_refB,elementsFEM_refB] = funMeshSetUp3(x_Grid_refB*axes_scale(1),y_Grid_refB*axes_scale(2),z_Grid_refB*axes_scale(3));
 
 %%%%% Cone plot grid data: displacement %%%%%
-%Plotdisp_show3(uvw_Grid_refB_Vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
+Plotdisp_show3(uvw_Grid_refB_Vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
 
 %%%%% Cone plot grid data: infinitesimal strain %%%%%
 Plotstrain_show3(F_Grid_refB_Vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor',1,tstep);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% save out the results
+%%
 
+results_file_names_Eul = fullfile('results',['results_3D_LagTotal_',file_names{1}(1:end-4),'.mat']);
+if ~exist('results','dir') 
+   mkdir('results')
+end
+
+resultDispInc = resultDisp;
+resultDefGradInc = resultDefGrad;
+save(results_file_names_Eul,'resultDispInc','resultDefGradInc','parCoordTrajMat','disp_A2BCum','beadParam_all',...
+    'MPTPara','F_Grid_refB_Vector','uvw_Grid_refB_Vector','coordinatesFEM_refB', 'elementsFEM_refB');
+
+disp('%%%%% Cumulated reuslts saved %%%%%'); fprintf('\n');
 
 
