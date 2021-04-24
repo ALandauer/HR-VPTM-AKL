@@ -186,9 +186,6 @@ BeadPara.beadSize = 20;          % Estimated radius of a single particle
 BeadPara.minSize = 1000;           % Minimum num of voxels of a single particle
 BeadPara.maxSize = 10000;         % Maximum num of voxels of a single particle
 BeadPara.winSize = [50,50,50];     % By default
-BeadPara.dccd = [1,1,1];        % By default
-BeadPara.abc = [1,1,1];         % By default
-BeadPara.forloop = 1;           % By default
 BeadPara.randNoise = 1e-7;      % By default
 BeadPara.numBeadsPSF = 1;
 BeadPara.fileFolder = fileFolder; %folder for raw images
@@ -202,23 +199,31 @@ BeadPara.color = 'white';         % By default
 %%%%% Trial-MPT Parameter %%%%%
 MPTPara.f_o_s = Inf;              % Size of search field: max(|u|,|v|,|w|)
 MPTPara.edge_width = 15;          %width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
-MPTPara.n_neighborsMax = 8;     % Max # of neighboring particles
+MPTPara.n_neighborsMax = 16;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
 MPTPara.smoothness = 0.05;       % Coefficient of regularization
 MPTPara.outlrThres = 3;          % Threshold for removing outliers in MPT
 MPTPara.maxIterNum = 8;         % Max ADMM iteration number
 MPTPara.iterStopThres = 1e-3;    % ADMM iteration stopping threshold
-MPTPara.strain_n_neighbors = 8; % # of neighboring particles used in strain gauge
-MPTPara.strain_f_o_s = Inf;       % Size of virtual strain gauge
+
 MPTPara.usePrevResults = 0;      % Whether use previous results or not: 0-no; 1-yes;
+MPTPara.post_proc_type = 'eulerian'; %Whether to use a Lagrangian trajectory routine or Eulerian gridded routine for post-proc
 
 %%%% Postprocessing: merge trajectory segments %%%%%
+%FOR LAGRANGIAN POST-PROCESSING 
+MPTPara.strain_f_o_s = Inf;       % Size of virtual strain gauge
+MPTPara.strain_n_neighbors = 8; % # of neighboring particles used in strain gauge
 distThres = 55; % distance threshold to connect split trajectory segments
 extrapMethod = 'pchip';  % extrapolation scheme to connect split trajectory segments
                          % suggestion: 'nearest' for Brownian motion
 minTrajSegLength = 10;    % the minimum length of trajectory segment that will be extrapolated
 maxGapTrajSeqLength = 1; % the max frame# gap between connected trajectory segments
+
+%%%% Postprocessing: gridding %%%%%
+%FOR EULERIAN POST-PROCESSING 
+grid_spacing = [50,50,50]; % grid spacing parameters
+
 
 %%%%% Run Trial-MPT tracking %%%%%
 run_Trial_MPT_3D_hardpar_inc;
