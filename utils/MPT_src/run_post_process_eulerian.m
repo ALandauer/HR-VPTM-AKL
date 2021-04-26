@@ -7,11 +7,16 @@
 
 % set up vars
 smoothness = MPTPara.smoothness;
+
+smoothness = 0.05;
+grid_spacing = [25,25,25]; 
+
 coords_cur = resultDisp{1}.parCoordA;
-xList = MPTPara.xRange(1):grid_spacing(1):MPTPara.xRange(2);
-yList = MPTPara.yRange(1):grid_spacing(2):MPTPara.yRange(2);
+xList = MPTPara.xRange(1)-grid_spacing(1):grid_spacing(1):MPTPara.xRange(2)+grid_spacing(1);
+yList = MPTPara.yRange(1)-grid_spacing(2):grid_spacing(2):MPTPara.yRange(2)+grid_spacing(2);
 zList = MPTPara.depthRange(1):grid_spacing(3):MPTPara.depthRange(2);
 [yGrid,xGrid,zGrid] = meshgrid(yList,xList,zList);
+
 
 disp('%%%%% Interpolating tracking results on ref grid %%%%%'); fprintf('\n');
 %interpolate scattered data onto eluerian grid
@@ -19,8 +24,19 @@ u_inc = cell(1,length(resultDisp));
 H_inc = cell(1,length(resultDefGrad));
 for ii = 1:length(resultDisp)
     
-    coords_cur = resultDisp{ii}.parCoordB;
+    coords_cur_ = resultDisp{ii}.parCoordB;
+    coords_cur = coords_cur_;
+    coords_cur(coords_cur_(:,1) > MPTPara.xRange(2),:) = [];
+    coords_cur(coords_cur_(:,2) > MPTPara.yRange(2),:) = [];
+    coords_cur(coords_cur_(:,1) < MPTPara.xRange(1),:) = [];
+    coords_cur(coords_cur_(:,2) < MPTPara.yRange(1),:) = [];
+    
     disps_cur = resultDisp{ii}.disp_A2B_parCoordB;
+    disps_cur(coords_cur_(:,1) > MPTPara.xRange(2),:) = [];
+    disps_cur(coords_cur_(:,2) > MPTPara.yRange(2),:) = [];
+    disps_cur(coords_cur_(:,1) < MPTPara.xRange(1),:) = [];
+    disps_cur(coords_cur_(:,2) < MPTPara.yRange(1),:) = [];
+    
     [x_grid_ref,y_grid_ref,z_grid_ref,u_inc{ii}{1}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),disps_cur(:,1),grid_spacing,smoothness,xGrid,yGrid,zGrid);
     [~,~,~,u_inc{ii}{2}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),disps_cur(:,2),grid_spacing,smoothness,xGrid,yGrid,zGrid);
     [~,~,~,u_inc{ii}{3}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),disps_cur(:,3),grid_spacing,smoothness,xGrid,yGrid,zGrid);
@@ -140,6 +156,7 @@ uvw_Grid_ref_vector=uvw_Grid_ref_vector(:);
 % F_vector = [F11_pt1,F21_pt1,F31_pt1,F12_pt1,F22_pt1,F32_pt1,F13_pt1,F23_pt1,F33_pt1, ...
 %                   F11_pt2,F21_pt2,F31_pt2,F12_pt2,F22_pt2,F32_pt2,F13_pt2,F23_pt2,F33_pt2, ...
 %                   ... Other points ... ]'
+n_pts = numel(F_total{1}{1});
 F_grid_ref_vector = zeros(9*n_pts,1);
 F_grid_ref_vector(1:9:end) = F_total{frame_num}{1,1}(:);
 F_grid_ref_vector(2:9:end) = F_total{frame_num}{2,1}(:);
@@ -155,19 +172,17 @@ F_grid_ref_vector(9:9:end) = F_total{frame_num}{3,3}(:);
 [coordinatesFEM_ref,elementsFEM_ref] = funMeshSetUp3(x_grid_ref,y_grid_ref,z_grid_ref);
 
 %%%%% Cone plot grid data: displacement %%%%%
-Plotdisp_show3(uvw_Grid_ref_vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
-
-%%%%% Cone plot grid data: infinitesimal strain %%%%%
-Plotstrain_show3(F_grid_ref_vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor',1,tstep);
+% Plotdisp_show3(uvw_Grid_ref_vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
+% 
+% %%%%% Cone plot grid data: infinitesimal strain %%%%%
+% Plotstrain_show3(F_grid_ref_vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor',1,tstep);
 
 
 
 %%
 %plot mean strain comps
-
+bd_wd = 15;
 for ii = 1:length(F_total)
-    bd_wd = 5;
-    
     mean_strain_11(ii,1) = mean(F_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;
     mean_strain_22(ii,1) = mean(F_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;
     mean_strain_33(ii,1) = mean(F_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;
@@ -199,5 +214,5 @@ shadedErrorBar(step_num,mean_strain_23,std_strain_23,'k-.^',1)
 xlabel('step num')
 ylabel('Strain')
 
-title('Synth shear; Stdev shaded region')
+title('Shear; Stdev shaded region')
 
