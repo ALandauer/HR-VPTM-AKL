@@ -25,8 +25,8 @@ import2ws();
 % fileNamePrefix = 'dz_*';
 
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['dz_exp_0421',filesep]; %subfolder for a specific experiment
-fileNamePrefix = 'dz_*';
+data_subfolder = ['exp_shear_2_45_to120',filesep]; %subfolder for a specific experiment
+fileNamePrefix = '10sps_*';
 
 
 %% ======================= SET-UP SECTION ============================
@@ -34,7 +34,7 @@ fileNamePrefix = 'dz_*';
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-800, 260];
+depthRange = [-650, 400];
 % axial slice step (in um)
 depthStep = 5;
 
@@ -187,7 +187,7 @@ BeadPara.minSize = 1000;           % Minimum num of voxels of a single particle
 BeadPara.maxSize = 10000;         % Maximum num of voxels of a single particle
 BeadPara.winSize = [50,50,50];     % By default
 BeadPara.randNoise = 1e-7;      % By default
-BeadPara.numBeadsPSF = 1;
+BeadPara.numBeadsPSF = 2;
 BeadPara.fileFolder = fileFolder; %folder for raw images
 BeadPara.saveIntermediates = 1;   %1 = save and reuse intermediate raw images
 BeadPara.PSF = [];                % PSF function; Example: PSF = fspecial('disk', BeadPara.beadSize-1 ); % Disk blur
@@ -197,8 +197,8 @@ BeadPara.color = 'white';         % By default
 % Trial-MPT tracking
 
 %%%%% Trial-MPT Parameter %%%%%
-MPTPara.f_o_s = Inf;              % Size of search field: max(|u|,|v|,|w|)
-MPTPara.edge_width = 15;          %width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
+MPTPara.f_o_s = 200;              % Size of search field: max(|u|,|v|,|w|)
+MPTPara.edge_width = 20;          %width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
 MPTPara.n_neighborsMax = 16;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
@@ -222,7 +222,7 @@ maxGapTrajSeqLength = 1; % the max frame# gap between connected trajectory segme
 
 %%%% Postprocessing: gridding %%%%%
 %FOR EULERIAN POST-PROCESSING 
-grid_spacing = [50,50,50]; % grid spacing parameters
+grid_spacing = [30,30,30]; % grid spacing parameters
 
 
 %%%%% Run Trial-MPT tracking %%%%%

@@ -177,7 +177,7 @@ while iterNum < maxIterNum
             end
             
         else
-            matches_A2B = f_track_nearest_neighbour3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );
+            matches_A2B = f_track_nearest_neighbor3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );
         end
         
         %discard untrack particles
