@@ -221,7 +221,7 @@ end
 
 save(results_file_names_inc,'resultDisp','resultDefGrad','beadParam_all','MPTPara');
 
-if strcomi(MPTPara.post_proc_type,'lagrangian') 
+if strcmpi(MPTPara.post_proc_type,'lagrangian') 
     run_post_process_lagrangian
 elseif strcmpi(MPTPara.post_proc_type,'eulerian')
     run_post_process_eulerian

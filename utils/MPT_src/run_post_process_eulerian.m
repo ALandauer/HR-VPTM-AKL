@@ -11,12 +11,16 @@ smoothness = MPTPara.smoothness;
 smoothness = 0.05;
 grid_spacing = [25,25,25]; 
 
+
+
 coords_cur = resultDisp{1}.parCoordA;
 xList = MPTPara.xRange(1)-grid_spacing(1):grid_spacing(1):MPTPara.xRange(2)+grid_spacing(1);
 yList = MPTPara.yRange(1)-grid_spacing(2):grid_spacing(2):MPTPara.yRange(2)+grid_spacing(2);
-zList = MPTPara.depthRange(1):grid_spacing(3):MPTPara.depthRange(2);
-[yGrid,xGrid,zGrid] = meshgrid(yList,xList,zList);
 
+MPTPara.zRange(1) = min(coords_cur(:,3))-2*grid_spacing(3);
+MPTPara.zRange(2) = max(coords_cur(:,3))+2*grid_spacing(3);
+zList = MPTPara.zRange(1):grid_spacing(3):MPTPara.zRange(2);
+[yGrid,xGrid,zGrid] = meshgrid(yList,xList,zList);
 
 disp('%%%%% Interpolating tracking results on ref grid %%%%%'); fprintf('\n');
 %interpolate scattered data onto eluerian grid
@@ -24,30 +28,48 @@ u_inc = cell(1,length(resultDisp));
 H_inc = cell(1,length(resultDefGrad));
 for ii = 1:length(resultDisp)
     
-    coords_cur_ = resultDisp{ii}.parCoordB;
-    coords_cur = coords_cur_;
-    coords_cur(coords_cur_(:,1) > MPTPara.xRange(2),:) = [];
-    coords_cur(coords_cur_(:,2) > MPTPara.yRange(2),:) = [];
-    coords_cur(coords_cur_(:,1) < MPTPara.xRange(1),:) = [];
-    coords_cur(coords_cur_(:,2) < MPTPara.yRange(1),:) = [];
+    coords_cur_ = resultDisp{ii}.parCoordA;
+    keep_coords = ~[coords_cur_(:,1) > MPTPara.xRange(2)|...
+                   coords_cur_(:,2) > MPTPara.yRange(2)|...
+                   coords_cur_(:,1) < MPTPara.xRange(1)|...
+                   coords_cur_(:,2) < MPTPara.yRange(1)|...
+                   coords_cur_(:,3) < MPTPara.zRange(1)|...
+                   coords_cur_(:,3) > MPTPara.zRange(2)];
+    coords_cur_disp = coords_cur_(keep_coords,:);
     
-    disps_cur = resultDisp{ii}.disp_A2B_parCoordB;
-    disps_cur(coords_cur_(:,1) > MPTPara.xRange(2),:) = [];
-    disps_cur(coords_cur_(:,2) > MPTPara.yRange(2),:) = [];
-    disps_cur(coords_cur_(:,1) < MPTPara.xRange(1),:) = [];
-    disps_cur(coords_cur_(:,2) < MPTPara.yRange(1),:) = [];
+    disp_cur = resultDisp{ii}.disp_A2B_parCoordB(keep_coords,:);
     
-    [x_grid_ref,y_grid_ref,z_grid_ref,u_inc{ii}{1}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),disps_cur(:,1),grid_spacing,smoothness,xGrid,yGrid,zGrid);
-    [~,~,~,u_inc{ii}{2}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),disps_cur(:,2),grid_spacing,smoothness,xGrid,yGrid,zGrid);
-    [~,~,~,u_inc{ii}{3}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),disps_cur(:,3),grid_spacing,smoothness,xGrid,yGrid,zGrid);
+    [x_grid_ref,y_grid_ref,z_grid_ref,u_inc{ii}{1}] = ...
+                           funScatter2Grid3D(coords_cur_disp(:,1),coords_cur_disp(:,2),coords_cur_disp(:,3),disp_cur(:,1),grid_spacing,smoothness,xGrid,yGrid,zGrid);
+    [~,~,~,u_inc{ii}{2}] = funScatter2Grid3D(coords_cur_disp(:,1),coords_cur_disp(:,2),coords_cur_disp(:,3),disp_cur(:,2),grid_spacing,smoothness,xGrid,yGrid,zGrid);
+    [~,~,~,u_inc{ii}{3}] = funScatter2Grid3D(coords_cur_disp(:,1),coords_cur_disp(:,2),coords_cur_disp(:,3),disp_cur(:,3),grid_spacing,smoothness,xGrid,yGrid,zGrid);
     
-    F_cur = resultDefGrad{ii}.F_A2B_refA;
-    [~,~,~,H_inc{ii}{1,1}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),F_cur(1:9:end),grid_spacing,smoothness,xGrid,yGrid,zGrid);
-    [~,~,~,H_inc{ii}{2,2}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),F_cur(5:9:end),grid_spacing,smoothness,xGrid,yGrid,zGrid);
-    [~,~,~,H_inc{ii}{3,3}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),F_cur(9:9:end),grid_spacing,smoothness,xGrid,yGrid,zGrid);
-    [~,~,~,H_inc{ii}{1,2}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),F_cur(4:9:end),grid_spacing,smoothness,xGrid,yGrid,zGrid);
-    [~,~,~,H_inc{ii}{1,3}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),F_cur(7:9:end),grid_spacing,smoothness,xGrid,yGrid,zGrid);
-    [~,~,~,H_inc{ii}{2,3}] = funScatter2Grid3D(coords_cur(:,1),coords_cur(:,2),coords_cur(:,3),F_cur(8:9:end),grid_spacing,smoothness,xGrid,yGrid,zGrid);
+    coords_cur_ = resultDefGrad{ii}.XY_refA;
+    keep_coords = ~[coords_cur_(:,1) > MPTPara.xRange(2)|...
+                   coords_cur_(:,2) > MPTPara.yRange(2)|...
+                   coords_cur_(:,1) < MPTPara.xRange(1)|...
+                   coords_cur_(:,2) < MPTPara.yRange(1)|...
+                   coords_cur_(:,3) < MPTPara.zRange(1)|...
+                   coords_cur_(:,3) > MPTPara.zRange(2)];
+    coords_cur_strain = coords_cur_(keep_coords,:);
+                                         
+    
+    F_cur_vec = resultDefGrad{ii}.F_A2B_refA;
+    F_cur_ = zeros(length(coords_cur_),6);
+    F_cur_(:,1) = F_cur_vec(1:9:end);
+    F_cur_(:,2) = F_cur_vec(5:9:end);
+    F_cur_(:,3) = F_cur_vec(9:9:end);
+    F_cur_(:,4) = F_cur_vec(4:9:end);
+    F_cur_(:,5) = F_cur_vec(7:9:end);
+    F_cur_(:,6) = F_cur_vec(8:9:end);
+    F_cur = F_cur_(keep_coords,:);
+    
+    [~,~,~,H_inc{ii}{1,1}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,1),grid_spacing,smoothness,xGrid,yGrid,zGrid);
+    [~,~,~,H_inc{ii}{2,2}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,2),grid_spacing,smoothness,xGrid,yGrid,zGrid);
+    [~,~,~,H_inc{ii}{3,3}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,3),grid_spacing,smoothness,xGrid,yGrid,zGrid);
+    [~,~,~,H_inc{ii}{1,2}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,4),grid_spacing,smoothness,xGrid,yGrid,zGrid);
+    [~,~,~,H_inc{ii}{1,3}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,5),grid_spacing,smoothness,xGrid,yGrid,zGrid);
+    [~,~,~,H_inc{ii}{2,3}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,6),grid_spacing,smoothness,xGrid,yGrid,zGrid);
     H_inc{ii}{2,1} = H_inc{ii}{1,2}; H_inc{ii}{1,3} = H_inc{ii}{1,3}; H_inc{ii}{3,2} = H_inc{ii}{2,3};
 end
 
@@ -139,49 +161,51 @@ disp('%%%%% Cumulated Eulerian reuslts saved %%%%%'); fprintf('\n');
 
 %% plotting options
 disp('%%%%% Optional plotting code - modify as needed %%%%%'); fprintf('\n');
-%%%%% Cone plot grid data: displecement %%%%%
-frame_num = 5;
-
-figure, plotCone3(x_grid_ref,y_grid_ref,z_grid_ref,u_total{frame_num}{1},u_total{frame_num}{2},u_total{frame_num}{3});
-set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
-title('Tracked cumulative displacement','fontweight','normal');
-axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
-    MPTPara.yRange(1), MPTPara.yRange(2), ...
-    MPTPara.depthRange(1), MPTPara.depthRange(2)]);
-
-% uvw_Grid_ref_vector
-uvw_Grid_ref_vector=[u_total{frame_num}{1}(:),u_total{frame_num}{2}(:),u_total{frame_num}{3}(:)]'; 
-uvw_Grid_ref_vector=uvw_Grid_ref_vector(:);
-
-% F_vector = [F11_pt1,F21_pt1,F31_pt1,F12_pt1,F22_pt1,F32_pt1,F13_pt1,F23_pt1,F33_pt1, ...
-%                   F11_pt2,F21_pt2,F31_pt2,F12_pt2,F22_pt2,F32_pt2,F13_pt2,F23_pt2,F33_pt2, ...
-%                   ... Other points ... ]'
-n_pts = numel(F_total{1}{1});
-F_grid_ref_vector = zeros(9*n_pts,1);
-F_grid_ref_vector(1:9:end) = F_total{frame_num}{1,1}(:);
-F_grid_ref_vector(2:9:end) = F_total{frame_num}{2,1}(:);
-F_grid_ref_vector(3:9:end) = F_total{frame_num}{3,1}(:);
-F_grid_ref_vector(4:9:end) = F_total{frame_num}{1,2}(:);
-F_grid_ref_vector(5:9:end) = F_total{frame_num}{2,2}(:);
-F_grid_ref_vector(6:9:end) = F_total{frame_num}{3,2}(:);
-F_grid_ref_vector(7:9:end) = F_total{frame_num}{1,3}(:);
-F_grid_ref_vector(8:9:end) = F_total{frame_num}{2,3}(:);
-F_grid_ref_vector(9:9:end) = F_total{frame_num}{3,3}(:);
-
-%%%%% Generate an FE-mesh %%%%%
-[coordinatesFEM_ref,elementsFEM_ref] = funMeshSetUp3(x_grid_ref,y_grid_ref,z_grid_ref);
-
-%%%%% Cone plot grid data: displacement %%%%%
-% Plotdisp_show3(uvw_Grid_ref_vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
-% 
-% %%%%% Cone plot grid data: infinitesimal strain %%%%%
-% Plotstrain_show3(F_grid_ref_vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor',1,tstep);
+% % % %%%%% Cone plot grid data: displecement %%%%%
+% % % frame_num = 5;
+% % % 
+% % % figure, plotCone3(x_grid_ref,y_grid_ref,z_grid_ref,u_total{frame_num}{1},u_total{frame_num}{2},u_total{frame_num}{3});
+% % % set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
+% % % title('Tracked cumulative displacement','fontweight','normal');
+% % % axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
+% % %     MPTPara.yRange(1), MPTPara.yRange(2), ...
+% % %     MPTPara.depthRange(1), MPTPara.depthRange(2)]);
+% % % 
+% % % % uvw_Grid_ref_vector
+% % % uvw_Grid_ref_vector=[u_total{frame_num}{1}(:),u_total{frame_num}{2}(:),u_total{frame_num}{3}(:)]'; 
+% % % uvw_Grid_ref_vector=uvw_Grid_ref_vector(:);
+% % % 
+% % % % F_vector = [F11_pt1,F21_pt1,F31_pt1,F12_pt1,F22_pt1,F32_pt1,F13_pt1,F23_pt1,F33_pt1, ...
+% % % %                   F11_pt2,F21_pt2,F31_pt2,F12_pt2,F22_pt2,F32_pt2,F13_pt2,F23_pt2,F33_pt2, ...
+% % % %                   ... Other points ... ]'
+% % % n_pts = numel(F_total{1}{1});
+% % % F_grid_ref_vector = zeros(9*n_pts,1);
+% % % F_grid_ref_vector(1:9:end) = F_total{frame_num}{1,1}(:);
+% % % F_grid_ref_vector(2:9:end) = F_total{frame_num}{2,1}(:);
+% % % F_grid_ref_vector(3:9:end) = F_total{frame_num}{3,1}(:);
+% % % F_grid_ref_vector(4:9:end) = F_total{frame_num}{1,2}(:);
+% % % F_grid_ref_vector(5:9:end) = F_total{frame_num}{2,2}(:);
+% % % F_grid_ref_vector(6:9:end) = F_total{frame_num}{3,2}(:);
+% % % F_grid_ref_vector(7:9:end) = F_total{frame_num}{1,3}(:);
+% % % F_grid_ref_vector(8:9:end) = F_total{frame_num}{2,3}(:);
+% % % F_grid_ref_vector(9:9:end) = F_total{frame_num}{3,3}(:);
+% % % 
+% % % %%%%% Generate an FE-mesh %%%%%
+% % % [coordinatesFEM_ref,elementsFEM_ref] = funMeshSetUp3(x_grid_ref,y_grid_ref,z_grid_ref);
+% % % 
+% % % %%%%% Cone plot grid data: displacement %%%%%
+% % % % Plotdisp_show3(uvw_Grid_ref_vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
+% % % % 
+% % % % %%%%% Cone plot grid data: infinitesimal strain %%%%%
+% % % % Plotstrain_show3(F_grid_ref_vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor',1,tstep);
 
 
 
 %%
 %plot mean strain comps
-bd_wd = 15;
+bd_wd = 10;
+clear mean_strain_* std_strain_*
+
 for ii = 1:length(F_total)
     mean_strain_11(ii,1) = mean(F_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;
     mean_strain_22(ii,1) = mean(F_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;

@@ -182,7 +182,7 @@ fileTrialMPTPath = cur_dir;
 % Bead parameter setup
 BeadPara.deconvIter = 5;           % Threshold for detecting particles
 BeadPara.thres = 0.5;           % Threshold for detecting particles
-BeadPara.beadSize = 20;          % Estimated radius of a single particle
+BeadPara.beadSize = 30;          % Estimated radius of a single particle
 BeadPara.minSize = 1000;           % Minimum num of voxels of a single particle
 BeadPara.maxSize = 10000;         % Maximum num of voxels of a single particle
 BeadPara.winSize = [50,50,50];     % By default
@@ -197,8 +197,8 @@ BeadPara.color = 'white';         % By default
 % Trial-MPT tracking
 
 %%%%% Trial-MPT Parameter %%%%%
-MPTPara.f_o_s = 200;              % Size of search field: max(|u|,|v|,|w|)
-MPTPara.edge_width = 20;          %width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
+MPTPara.f_o_s = 500;              % Size of search field: max(|u|,|v|,|w|)
+MPTPara.edge_width = 20;          % Width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
 MPTPara.n_neighborsMax = 16;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
@@ -213,7 +213,7 @@ MPTPara.post_proc_type = 'eulerian'; %Whether to use a Lagrangian trajectory rou
 %%%% Postprocessing: merge trajectory segments %%%%%
 %FOR LAGRANGIAN POST-PROCESSING 
 MPTPara.strain_f_o_s = Inf;       % Size of virtual strain gauge
-MPTPara.strain_n_neighbors = 8; % # of neighboring particles used in strain gauge
+MPTPara.strain_n_neighbors = 16; % # of neighboring particles used in strain gauge
 distThres = 55; % distance threshold to connect split trajectory segments
 extrapMethod = 'pchip';  % extrapolation scheme to connect split trajectory segments
                          % suggestion: 'nearest' for Brownian motion
@@ -222,7 +222,7 @@ maxGapTrajSeqLength = 1; % the max frame# gap between connected trajectory segme
 
 %%%% Postprocessing: gridding %%%%%
 %FOR EULERIAN POST-PROCESSING 
-grid_spacing = [30,30,30]; % grid spacing parameters
+grid_spacing = [30,30,20]; % grid spacing parameters
 
 
 %%%%% Run Trial-MPT tracking %%%%%
