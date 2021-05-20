@@ -8,14 +8,14 @@
 % set up vars
 smoothness = MPTPara.smoothness;
 
-smoothness = 0.05;
-grid_spacing = [25,25,25]; 
+% smoothness = 0.05;
+% grid_spacing = [25,25,25]; 
 
 
 
 coords_cur = resultDisp{1}.parCoordA;
-xList = MPTPara.xRange(1)-grid_spacing(1):grid_spacing(1):MPTPara.xRange(2)+grid_spacing(1);
-yList = MPTPara.yRange(1)-grid_spacing(2):grid_spacing(2):MPTPara.yRange(2)+grid_spacing(2);
+xList = MPTPara.xRange(1)-2*grid_spacing(1):grid_spacing(1):MPTPara.xRange(2)+2*grid_spacing(1);
+yList = MPTPara.yRange(1)-2*grid_spacing(2):grid_spacing(2):MPTPara.yRange(2)+2*grid_spacing(2);
 
 MPTPara.zRange(1) = min(coords_cur(:,3))-2*grid_spacing(3);
 MPTPara.zRange(2) = max(coords_cur(:,3))+2*grid_spacing(3);
@@ -37,7 +37,7 @@ for ii = 1:length(resultDisp)
                    coords_cur_(:,3) > MPTPara.zRange(2)];
     coords_cur_disp = coords_cur_(keep_coords,:);
     
-    disp_cur = resultDisp{ii}.disp_A2B_parCoordB(keep_coords,:);
+    disp_cur = resultDisp{ii}.parCoordA(keep_coords,:);
     
     [x_grid_ref,y_grid_ref,z_grid_ref,u_inc{ii}{1}] = ...
                            funScatter2Grid3D(coords_cur_disp(:,1),coords_cur_disp(:,2),coords_cur_disp(:,3),disp_cur(:,1),grid_spacing,smoothness,xGrid,yGrid,zGrid);
@@ -203,23 +203,23 @@ disp('%%%%% Optional plotting code - modify as needed %%%%%'); fprintf('\n');
 
 %%
 %plot mean strain comps
-bd_wd = 10;
+bd_wd = 2;
 clear mean_strain_* std_strain_*
 
-for ii = 1:length(F_total)
+for ii = 1:length(F_total)-1
     mean_strain_11(ii,1) = mean(F_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;
     mean_strain_22(ii,1) = mean(F_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;
     mean_strain_33(ii,1) = mean(F_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;
-    mean_strain_12(ii,1) = mean(F_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_13(ii,1) = mean(F_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_23(ii,1) = mean(F_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_12(ii,1) = mean(F_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,'all','omitnan');
+    mean_strain_13(ii,1) = mean(F_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,'all','omitnan');
+    mean_strain_23(ii,1) = mean(F_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,'all','omitnan');
     
-    std_strain_11(ii,1) = std(F_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan');
-    std_strain_22(ii,1) = std(F_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan');
-    std_strain_33(ii,1) = std(F_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan');
-    std_strain_12(ii,1) = std(F_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan');
-    std_strain_13(ii,1) = std(F_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan');
-    std_strain_23(ii,1) = std(F_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan');
+    std_strain_11(ii,1) = std(F_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
+    std_strain_22(ii,1) = std(F_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
+    std_strain_33(ii,1) = std(F_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
+    std_strain_12(ii,1) = std(F_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
+    std_strain_13(ii,1) = std(F_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
+    std_strain_23(ii,1) = std(F_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
 end
 
 %u_total = inc2cum(u,dm,m,'linear');
@@ -238,5 +238,5 @@ shadedErrorBar(step_num,mean_strain_23,std_strain_23,'k-.^',1)
 xlabel('step num')
 ylabel('Strain')
 
-title('Shear; Stdev shaded region')
+title('Shear; std err shaded region')
 

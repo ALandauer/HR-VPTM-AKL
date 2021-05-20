@@ -1,15 +1,14 @@
 function [matches_A2B,u_B2A_curr_refB,track_A2B] = f_track_trial_match3D( parCoordA, parCoordB, varargin )
-%FUNCTION matches = f_track_neightopo_match3D(parCoordA,parCoordB,f_o_s,n_neighbors)
-% Objective: Tracking based on topology similarity
+%FUNCTION matches = f_track_neightopo_match3D(parCoordA,parCoordB,varargin)
+% Objective: Tracking based on assorted paradigms - use a series if
+% tracking is poor
 % ---------------------------------------------------
 %
 %   INPUT:      parCoordA        - coordinates of particles in image A [n x 3]
 %
 %               parCoordB        - coordinates of particles in image B [n x 3]
 %
-%               f_o_s         - field of search [px]
-%
-%               n_neighbours  - number of neighbouring particles [integer]
+%               varargin         - series of inputs for tracking params
 %
 %   OUTPUT:     matches_A2B       - list of indices of matching particles [m x 3]
 %
@@ -142,10 +141,11 @@ while iterNum < maxIterNum
     
     %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%% Local step: matching %%%%%
+    gauss_interp = 0;
     matches_A2B = [];
     while isempty(matches_A2B) && n_neighborsMax < length(parNotMissingIndA)
         
-        if n_neighbors > 5 && n_neighborsMax <= length(parCoordBCurr(parNotMissingIndBCurr,:)) && n_neighborsMax <= length(parCoordA(parNotMissingIndA,:))
+        if n_neighbors > 12 && n_neighborsMax <= length(parCoordBCurr(parNotMissingIndBCurr,:)) && n_neighborsMax <= length(parCoordA(parNotMissingIndA,:))
             %             try
             %                 matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors );
             %                 % matches_A2B = f_track_hist_match( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp );
@@ -156,26 +156,38 @@ while iterNum < maxIterNum
             tptParam.maxIter = 16;
             tptParam.outlrThres = outlrThres;
             tptParam.knnFD = n_neighborsMax;
-            tptParam.fmThres = 2;
+            tptParam.fmThres = 5;
             tptParam.nSpheres = 2;
             tptParam.sizeI = ImgSize;
             matches_A2B_ = TPT(parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:),tptParam, predictor);
             matches_A2B = [[1:length(matches_A2B_)]',matches_A2B_];
             
             %try other methods if TPT doesn't find enough matches
-            if sum(matches_A2B > 0,'all') < (length(parCoordA)/3 + length(matches_A2B))
+            if sum(matches_A2B > 0,'all') < (length(parCoordA)/2 + length(matches_A2B))
                 disp('Trying Neighborhood Topology matching')
                 matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors);
             end
-            if sum(matches_A2B > 0,'all') < (length(parCoordA)/3 + length(matches_A2B))
+            if sum(matches_A2B > 0,'all') < (length(parCoordA)/2 + length(matches_A2B))
                 disp('Trying Histogram matching')
                 matches_A2B = f_track_hist_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp);
             end
-            if sum(matches_A2B > 0,'all') < (length(parCoordA)/3 + length(matches_A2B))
+            if sum(matches_A2B > 0,'all') < (length(parCoordA)/2 + length(matches_A2B))
                 disp('Trying 1NN matching')
                 matches_A2B = f_track_nearest_neighbor3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );
             end
             
+        elseif n_neighbors > 5 && n_neighborsMax <= length(parCoordBCurr(parNotMissingIndBCurr,:)) && n_neighborsMax <= length(parCoordA(parNotMissingIndA,:))
+            %try other methods if to few particles for TPT matches
+            matches_A2B = f_track_neightopo_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors);
+            
+            if sum(matches_A2B > 0,'all') < (length(parCoordA)/2 + length(matches_A2B))
+                disp('Trying Histogram matching')
+                matches_A2B = f_track_hist_match3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s, n_neighbors, gauss_interp);
+            end
+            if sum(matches_A2B > 0,'all') < (length(parCoordA)/2 + length(matches_A2B))
+                disp('Trying 1NN matching')
+                matches_A2B = f_track_nearest_neighbor3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );
+            end
         else
             matches_A2B = f_track_nearest_neighbor3( parCoordA(parNotMissingIndA,:), parCoordBCurr(parNotMissingIndBCurr,:), f_o_s );
         end

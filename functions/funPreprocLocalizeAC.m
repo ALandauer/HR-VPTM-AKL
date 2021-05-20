@@ -105,8 +105,6 @@ else
     vol = deconvlucy(vol_deconv, psf, deconv_iter);
     
     %renormalize output
-    
-    
     vol = vol/max(vol(:));
     vol(vol < deconv_thresh) = 0;
     
@@ -125,10 +123,16 @@ end
 % get the threshold estimate if this is the first image in the sequence
 if ImgSeqNum == 1
     f1 = figure;
-    histogram(vol(vol~=0)),drawnow
+    histogram(vol(vol~=0))
+    drawnow
+    f2 = figure;
+    imagesc3d(vol),colorbar
+    drawnow
+    
     BeadPara.thres = input('Enter binarization threshold estimate from histogram: ');
     try
         close(f1)
+        close(f2)
     catch
     end
     %         thres_est = 0.075;

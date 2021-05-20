@@ -1,0 +1,6 @@
+rect = [300,107,696,603];
+
+%reconstruction depth range (im um)
+depthRange = [-650, 400];
+% axial slice step (in um)
+depthStep = 5;

@@ -25,7 +25,7 @@ import2ws();
 % fileNamePrefix = 'dz_*';
 
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['exp_shear_2_45_to120',filesep]; %subfolder for a specific experiment
+data_subfolder = ['exp_shear_10sps_25s_007_20210510',filesep]; %subfolder for a specific experiment
 fileNamePrefix = '10sps_*';
 
 
@@ -34,9 +34,10 @@ fileNamePrefix = '10sps_*';
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-650, 400];
+depthRange = [-1150, 150];
 % axial slice step (in um)
 depthStep = 5;
+
 
 % choose lenslet spacing (in  pixels) to downsample the number of pixels between mlens for speed up
 newSpacingPx = 15; % 'default' means no up/down-sampling (newSpacingPx = lensPitch/pixelPitch)
@@ -202,7 +203,7 @@ MPTPara.edge_width = 20;          % Width (in px) of image boarder within which 
 MPTPara.n_neighborsMax = 16;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
-MPTPara.smoothness = 0.05;       % Coefficient of regularization
+MPTPara.smoothness = 0.02;       % Coefficient of regularization
 MPTPara.outlrThres = 3;          % Threshold for removing outliers in MPT
 MPTPara.maxIterNum = 8;         % Max ADMM iteration number
 MPTPara.iterStopThres = 1e-3;    % ADMM iteration stopping threshold
@@ -222,7 +223,7 @@ maxGapTrajSeqLength = 1; % the max frame# gap between connected trajectory segme
 
 %%%% Postprocessing: gridding %%%%%
 %FOR EULERIAN POST-PROCESSING 
-grid_spacing = [30,30,20]; % grid spacing parameters
+grid_spacing = [20,20,15]; % grid spacing parameters
 
 
 %%%%% Run Trial-MPT tracking %%%%%
