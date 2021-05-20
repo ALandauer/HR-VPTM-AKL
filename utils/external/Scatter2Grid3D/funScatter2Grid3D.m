@@ -69,6 +69,7 @@ try
     try
         smoothness=vargin{6};
     catch
+        disp('default smoothness')
     end
 catch
 end
@@ -78,6 +79,7 @@ try
     yGrid=vargin{8};
     zGrid=vargin{9};
 catch
+    disp('default gridding')
 end
 
 end

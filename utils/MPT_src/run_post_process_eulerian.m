@@ -14,12 +14,12 @@ smoothness = MPTPara.smoothness;
 
 
 coords_cur = resultDisp{1}.parCoordA;
-xList = MPTPara.xRange(1)-2*grid_spacing(1):grid_spacing(1):MPTPara.xRange(2)+2*grid_spacing(1);
-yList = MPTPara.yRange(1)-2*grid_spacing(2):grid_spacing(2):MPTPara.yRange(2)+2*grid_spacing(2);
+xList = MPTPara.xRange(1)-1.5*MPTPara.edge_width*MPTPara.axesScale(1):grid_spacing(1):MPTPara.xRange(2)+1.5*MPTPara.edge_width*MPTPara.axesScale(1);
+yList = MPTPara.yRange(1)-1.5*MPTPara.edge_width*MPTPara.axesScale(2):grid_spacing(2):MPTPara.yRange(2)+1.5*MPTPara.edge_width*MPTPara.axesScale(2);
 
-MPTPara.zRange(1) = min(coords_cur(:,3))-2*grid_spacing(3);
-MPTPara.zRange(2) = max(coords_cur(:,3))+2*grid_spacing(3);
-zList = MPTPara.zRange(1):grid_spacing(3):MPTPara.zRange(2);
+MPTPara.zRange(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3)))-2*grid_spacing(3));
+MPTPara.zRange(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3)))+2*grid_spacing(3));
+zList = min(MPTPara.zRange):grid_spacing(3):max(MPTPara.zRange);
 [yGrid,xGrid,zGrid] = meshgrid(yList,xList,zList);
 
 disp('%%%%% Interpolating tracking results on ref grid %%%%%'); fprintf('\n');
@@ -49,8 +49,8 @@ for ii = 1:length(resultDisp)
                    coords_cur_(:,2) > MPTPara.yRange(2)|...
                    coords_cur_(:,1) < MPTPara.xRange(1)|...
                    coords_cur_(:,2) < MPTPara.yRange(1)|...
-                   coords_cur_(:,3) < MPTPara.zRange(1)|...
-                   coords_cur_(:,3) > MPTPara.zRange(2)];
+                   abs(coords_cur_(:,3)) < abs(MPTPara.zRange(1))|...
+                   abs(coords_cur_(:,3)) > abs(MPTPara.zRange(2))];
     coords_cur_strain = coords_cur_(keep_coords,:);
                                          
     
