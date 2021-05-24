@@ -7,20 +7,23 @@
 
 % set up vars
 smoothness = MPTPara.smoothness;
-
-% smoothness = 0.05;
-% grid_spacing = [25,25,25]; 
+grid_spacing = [20,20,15]; 
 
 
-
+%define data range, pad edges to accond for bead near edges moving outside
+%the range of the particles in the first image
 coords_cur = resultDisp{1}.parCoordA;
 xList = MPTPara.xRange(1)-1.5*MPTPara.edge_width*MPTPara.axesScale(1):grid_spacing(1):MPTPara.xRange(2)+1.5*MPTPara.edge_width*MPTPara.axesScale(1);
 yList = MPTPara.yRange(1)-1.5*MPTPara.edge_width*MPTPara.axesScale(2):grid_spacing(2):MPTPara.yRange(2)+1.5*MPTPara.edge_width*MPTPara.axesScale(2);
-
-MPTPara.zRange(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3)))-2*grid_spacing(3));
-MPTPara.zRange(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3)))+2*grid_spacing(3));
-zList = min(MPTPara.zRange):grid_spacing(3):max(MPTPara.zRange);
+%z range is slightly different since it can be negative or both pos and neg
+zRange_grid(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3)))-2*grid_spacing(3));
+zRange_grid(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3)))+2*grid_spacing(3));
+zList = min(zRange_grid):grid_spacing(3):max(zRange_grid);
 [yGrid,xGrid,zGrid] = meshgrid(yList,xList,zList);
+
+%Set z range without padding
+MPTPara.zRange(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3))));
+MPTPara.zRange(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3))));
 
 disp('%%%%% Interpolating tracking results on ref grid %%%%%'); fprintf('\n');
 %interpolate scattered data onto eluerian grid
@@ -28,16 +31,20 @@ u_inc = cell(1,length(resultDisp));
 H_inc = cell(1,length(resultDefGrad));
 for ii = 1:length(resultDisp)
     
-    coords_cur_ = resultDisp{ii}.parCoordA;
+    if ~mod(ii,10)
+        disp(ii)
+    end
+    
+    coords_cur_ = resultDisp{ii}.parCoordB;
     keep_coords = ~[coords_cur_(:,1) > MPTPara.xRange(2)|...
                    coords_cur_(:,2) > MPTPara.yRange(2)|...
                    coords_cur_(:,1) < MPTPara.xRange(1)|...
                    coords_cur_(:,2) < MPTPara.yRange(1)|...
-                   coords_cur_(:,3) < MPTPara.zRange(1)|...
-                   coords_cur_(:,3) > MPTPara.zRange(2)];
+                   abs(coords_cur_(:,3)) < min(abs(MPTPara.zRange))|...
+                   abs(coords_cur_(:,3)) > max(abs(MPTPara.zRange))];
     coords_cur_disp = coords_cur_(keep_coords,:);
     
-    disp_cur = resultDisp{ii}.parCoordA(keep_coords,:);
+    disp_cur = resultDisp{ii}.disp_A2B_parCoordB(keep_coords,:);
     
     [x_grid_ref,y_grid_ref,z_grid_ref,u_inc{ii}{1}] = ...
                            funScatter2Grid3D(coords_cur_disp(:,1),coords_cur_disp(:,2),coords_cur_disp(:,3),disp_cur(:,1),grid_spacing,smoothness,xGrid,yGrid,zGrid);
@@ -46,11 +53,11 @@ for ii = 1:length(resultDisp)
     
     coords_cur_ = resultDefGrad{ii}.XY_refA;
     keep_coords = ~[coords_cur_(:,1) > MPTPara.xRange(2)|...
-                   coords_cur_(:,2) > MPTPara.yRange(2)|...
-                   coords_cur_(:,1) < MPTPara.xRange(1)|...
-                   coords_cur_(:,2) < MPTPara.yRange(1)|...
-                   abs(coords_cur_(:,3)) < abs(MPTPara.zRange(1))|...
-                   abs(coords_cur_(:,3)) > abs(MPTPara.zRange(2))];
+                    coords_cur_(:,2) > MPTPara.yRange(2)|...
+                    coords_cur_(:,1) < MPTPara.xRange(1)|...
+                    coords_cur_(:,2) < MPTPara.yRange(1)|...
+                    abs(coords_cur_(:,3)) < min(abs(MPTPara.zRange))|...
+                    abs(coords_cur_(:,3)) > max(abs(MPTPara.zRange))];
     coords_cur_strain = coords_cur_(keep_coords,:);
                                          
     
@@ -62,7 +69,7 @@ for ii = 1:length(resultDisp)
     F_cur_(:,4) = F_cur_vec(4:9:end);
     F_cur_(:,5) = F_cur_vec(7:9:end);
     F_cur_(:,6) = F_cur_vec(8:9:end);
-    F_cur = F_cur_(keep_coords,:);
+    F_cur = F_cur_(keep_coords,:)/2;
     
     [~,~,~,H_inc{ii}{1,1}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,1),grid_spacing,smoothness,xGrid,yGrid,zGrid);
     [~,~,~,H_inc{ii}{2,2}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,2),grid_spacing,smoothness,xGrid,yGrid,zGrid);
@@ -70,7 +77,7 @@ for ii = 1:length(resultDisp)
     [~,~,~,H_inc{ii}{1,2}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,4),grid_spacing,smoothness,xGrid,yGrid,zGrid);
     [~,~,~,H_inc{ii}{1,3}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,5),grid_spacing,smoothness,xGrid,yGrid,zGrid);
     [~,~,~,H_inc{ii}{2,3}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,6),grid_spacing,smoothness,xGrid,yGrid,zGrid);
-    H_inc{ii}{2,1} = H_inc{ii}{1,2}; H_inc{ii}{1,3} = H_inc{ii}{1,3}; H_inc{ii}{3,2} = H_inc{ii}{2,3};
+    H_inc{ii}{2,1} = H_inc{ii}{1,2}; H_inc{ii}{3,1} = H_inc{ii}{1,3}; H_inc{ii}{3,2} = H_inc{ii}{2,3};
 end
 
 %%
@@ -87,6 +94,7 @@ disp('%%%%% Cumulating deformation gradient %%%%%'); fprintf('\n');
 % compute the cumulative deformation gradiant (F = e - I)
 F_total = cell(length(H_inc)+1,1);
 F_total{1} = cell(3);
+
 for j = 1:3
     for k = 1:3
         if k == j
@@ -98,6 +106,9 @@ for j = 1:3
 end
 
 for ii = 1:length(H_inc)
+    if ~mod(ii,10)
+        disp(ii)
+    end
     for loc = 1:numel(H_inc{ii}{1,1})
         H_inc_pt(loc,1) = H_inc{ii}{1,1}(loc);
         H_inc_pt(loc,2) = H_inc{ii}{2,2}(loc);
@@ -206,20 +217,25 @@ disp('%%%%% Optional plotting code - modify as needed %%%%%'); fprintf('\n');
 bd_wd = 2;
 clear mean_strain_* std_strain_*
 
-for ii = 1:length(F_total)-1
-    mean_strain_11(ii,1) = mean(F_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;
-    mean_strain_22(ii,1) = mean(F_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;
-    mean_strain_33(ii,1) = mean(F_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan')-1;
-    mean_strain_12(ii,1) = mean(F_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,'all','omitnan');
-    mean_strain_13(ii,1) = mean(F_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,'all','omitnan');
-    mean_strain_23(ii,1) = mean(F_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,'all','omitnan');
+[E_total,e_total] = calculateEij(F_total);
+
+for ii = 1:length(E_total)-1
+
+   
     
-    std_strain_11(ii,1) = std(F_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
-    std_strain_22(ii,1) = std(F_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
-    std_strain_33(ii,1) = std(F_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
-    std_strain_12(ii,1) = std(F_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
-    std_strain_13(ii,1) = std(F_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
-    std_strain_23(ii,1) = std(F_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(numel(track_A2B_prev{ii}));
+    mean_strain_11(ii,1) = mean(E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_22(ii,1) = mean(E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_33(ii,1) = mean(E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_12(ii,1) = mean(E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_13(ii,1) = mean(E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_23(ii,1) = mean(E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    
+    std_strain_11(ii,1) = std(E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
+    std_strain_22(ii,1) = std(E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
+    std_strain_33(ii,1) = std(E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
+    std_strain_12(ii,1) = std(E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
+    std_strain_13(ii,1) = std(E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
+    std_strain_23(ii,1) = std(E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
 end
 
 %u_total = inc2cum(u,dm,m,'linear');
@@ -228,15 +244,16 @@ end
 %
 step_num = 1:length(mean_strain_11);
 figure
-shadedErrorBar(step_num,mean_strain_11,std_strain_11,'g-x',1)
+shadedErrorBar(step_num,mean_strain_11,std_strain_11,'b-x',1)
 hold on
-shadedErrorBar(step_num,mean_strain_22,std_strain_22,'b-*',1)
+shadedErrorBar(step_num,mean_strain_22,std_strain_22,'g-*',1)
 shadedErrorBar(step_num,mean_strain_33,std_strain_33,'r-+',1)
-shadedErrorBar(step_num,mean_strain_12,std_strain_12,'y-.o',1)
-shadedErrorBar(step_num,-mean_strain_13,std_strain_13,'m-.s',1)
-shadedErrorBar(step_num,mean_strain_23,std_strain_23,'k-.^',1)
+shadedErrorBar(step_num,mean_strain_12,std_strain_12,'m-o',1)
+shadedErrorBar(step_num,mean_strain_13,std_strain_13,'y-s',1)
+shadedErrorBar(step_num,mean_strain_23,std_strain_23,'k-^',1)
 xlabel('step num')
 ylabel('Strain')
+axis([0,80,-.3,0.3])
 
 title('Shear; std err shaded region')
 
