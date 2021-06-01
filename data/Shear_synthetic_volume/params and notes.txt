@@ -1,4 +1,0 @@
-shear_percent: 0:.025:.25
-
-depthrange = [-80, 720];
-depthStep = 5; 

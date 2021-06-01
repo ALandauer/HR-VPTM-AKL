@@ -6,8 +6,8 @@
 %
 
 % set up vars
-smoothness = MPTPara.smoothness;
-grid_spacing = [20,20,15]; 
+smoothness = 0;%MPTPara.smoothness;
+% grid_spacing = [20,20,15]; 
 
 
 %define data range, pad edges to accond for bead near edges moving outside
@@ -158,6 +158,8 @@ for ii = 1:length(H_inc)
     
 end
 
+[E_total,e_total] = calculateEij(F_total);
+
 %% save the results
 results_file_names_Eul = fullfile('results',['results_3D_EulTotal_',file_names{1}(1:end-4),'.mat']);
 if ~exist('results','dir') 
@@ -166,7 +168,7 @@ end
 
 resultDispInc = resultDisp;
 resultDefGradInc = resultDefGrad;
-save(results_file_names_Eul,'resultDispInc','resultDefGradInc','u_total','F_total','beadParam_all','MPTPara');
+save(results_file_names_Eul,'resultDispInc','resultDefGradInc','u_total','F_total','E_total','beadParam_all','MPTPara');
 
 disp('%%%%% Cumulated Eulerian reuslts saved %%%%%'); fprintf('\n');
 
@@ -214,10 +216,9 @@ disp('%%%%% Optional plotting code - modify as needed %%%%%'); fprintf('\n');
 
 %%
 %plot mean strain comps
-bd_wd = 2;
+bd_wd = 15;
 clear mean_strain_* std_strain_*
 
-[E_total,e_total] = calculateEij(F_total);
 
 for ii = 1:length(E_total)-1
 
@@ -253,7 +254,7 @@ shadedErrorBar(step_num,mean_strain_13,std_strain_13,'y-s',1)
 shadedErrorBar(step_num,mean_strain_23,std_strain_23,'k-^',1)
 xlabel('step num')
 ylabel('Strain')
-axis([0,80,-.3,0.3])
+% axis([0,80,-.3,0.3])
 
 title('Shear; std err shaded region')
 

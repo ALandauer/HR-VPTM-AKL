@@ -1,6 +1,0 @@
-dx = 11; %um
-
-zrange of raw coordinate: 170:470; %(-150+320: 150+320) 
-
-depthrange = [-80, 720];
-depthStep = 5; 

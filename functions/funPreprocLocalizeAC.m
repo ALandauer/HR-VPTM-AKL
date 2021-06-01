@@ -19,8 +19,8 @@ deconv_iter = BeadPara.deconvIter;
 fileFolder = BeadPara.fileFolder;
 cur_deconv_img = [fileFolder,filesep,'deconv_imgs',filesep,'deconv_',file_names{ImgSeqNum}];
 
-if ~exist([fileFolder,filesep,'deconv_imgs'],'dir') 
-   mkdir([fileFolder,filesep,'deconv_imgs'])
+if ~exist([fileFolder,filesep,'deconv_imgs'],'dir')
+    mkdir([fileFolder,filesep,'deconv_imgs'])
 end
 
 if BeadPara.saveIntermediates == 1
@@ -129,10 +129,43 @@ if ImgSeqNum == 1
     imagesc3d(vol),colorbar
     drawnow
     
-    BeadPara.thres = input('Enter binarization threshold estimate from histogram: ');
+    BeadPara.thres = input('Enter binarization threshold estimate: ');
     try
         close(f1)
         close(f2)
+    catch
+    end
+    YN = 0;
+    while YN == 0
+        f3 = figure;
+        imagesc3d(vol>BeadPara.thres),colorbar
+        drawnow
+        
+        YN_ = input('Binarization okay? (Y/N) [N]: ','s');
+        
+        if strcmpi(YN_,'Y')
+            YN = 1;
+        else
+            f1 = figure;
+            histogram(vol(vol~=0))
+            drawnow
+            f2 = figure;
+            imagesc3d(vol),colorbar
+            drawnow
+            BeadPara.thres = input('Enter binarization threshold estimate from histogram: ');
+        end
+        
+    end
+    try
+        close(f1)
+    catch
+    end
+    try
+        close(f2)
+    catch
+    end
+    try
+        close(f3)
     catch
     end
     %         thres_est = 0.075;
