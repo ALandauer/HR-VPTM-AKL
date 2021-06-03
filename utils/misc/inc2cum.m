@@ -1,4 +1,4 @@
-function [ucum] = inc2cum(u,dm,m,option)
+function [ucum,nan_mask] = inc2cum(u,dm,m,option)
 %Conver incremental FIDIC/FIDVC displacement to cumulative displacements
 %   Inputs:
 %   -----------------------------------------------------------------------

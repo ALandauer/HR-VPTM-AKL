@@ -6,8 +6,9 @@
 %
 
 % set up vars
-smoothness = 0;%MPTPara.smoothness;
-% grid_spacing = [20,20,15]; 
+smoothness = 0.05;%MPTPara.smoothness;
+% MPTPara.edge_width = 20;
+% grid_spacing = [35,35,20]; 
 
 
 %define data range, pad edges to accond for bead near edges moving outside
@@ -26,7 +27,7 @@ MPTPara.zRange(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3))));
 MPTPara.zRange(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3))));
 
 disp('%%%%% Interpolating tracking results on ref grid %%%%%'); fprintf('\n');
-%interpolate scattered data onto eluerian grid
+%interpolate scattered data onto eulerian grid
 u_inc = cell(1,length(resultDisp));
 H_inc = cell(1,length(resultDefGrad));
 for ii = 1:length(resultDisp)
@@ -66,10 +67,10 @@ for ii = 1:length(resultDisp)
     F_cur_(:,1) = F_cur_vec(1:9:end);
     F_cur_(:,2) = F_cur_vec(5:9:end);
     F_cur_(:,3) = F_cur_vec(9:9:end);
-    F_cur_(:,4) = F_cur_vec(4:9:end);
-    F_cur_(:,5) = F_cur_vec(7:9:end);
-    F_cur_(:,6) = F_cur_vec(8:9:end);
-    F_cur = F_cur_(keep_coords,:)/2;
+    F_cur_(:,4) = F_cur_vec(4:9:end)/2;
+    F_cur_(:,5) = F_cur_vec(7:9:end)/2;
+    F_cur_(:,6) = F_cur_vec(8:9:end)/2;
+    F_cur = F_cur_(keep_coords,:);
     
     [~,~,~,H_inc{ii}{1,1}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,1),grid_spacing,smoothness,xGrid,yGrid,zGrid);
     [~,~,~,H_inc{ii}{2,2}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,2),grid_spacing,smoothness,xGrid,yGrid,zGrid);
@@ -86,7 +87,7 @@ disp('%%%%% Cumulating displacements %%%%%'); fprintf('\n');
 msh{1} = xGrid;
 msh{2} = yGrid;
 msh{3} = zGrid;
-u_total = inc2cum(u_inc,grid_spacing(1),msh,'linear');
+[u_total,nan_mask] = inc2cum(u_inc,grid_spacing(1),msh,'linear');
 
 
 %%
@@ -158,6 +159,9 @@ for ii = 1:length(H_inc)
     
 end
 
+% F_total_ = calculateFij(u_total,grid_spacing(1),[1,1,1],'optimal5');
+% [E_total,e_total] = calculateEij(F_total_);
+
 [E_total,e_total] = calculateEij(F_total);
 
 %% save the results
@@ -216,27 +220,39 @@ disp('%%%%% Optional plotting code - modify as needed %%%%%'); fprintf('\n');
 
 %%
 %plot mean strain comps
-bd_wd = 15;
+bd_wd = 2;
 clear mean_strain_* std_strain_*
 
 
 for ii = 1:length(E_total)-1
 
-   
+    N = sum(track_A2B_prev{ii}>0);
     
-    mean_strain_11(ii,1) = mean(E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_22(ii,1) = mean(E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_33(ii,1) = mean(E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_12(ii,1) = mean(E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_13(ii,1) = mean(E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_23(ii,1) = mean(E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_11(ii,1) = mean(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_22(ii,1) = mean(nan_mask{ii}{2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_33(ii,1) = mean(nan_mask{ii}{3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_12(ii,1) = mean(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_13(ii,1) = mean(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_23(ii,1) = mean(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
     
-    std_strain_11(ii,1) = std(E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
-    std_strain_22(ii,1) = std(E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
-    std_strain_33(ii,1) = std(E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
-    std_strain_12(ii,1) = std(E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
-    std_strain_13(ii,1) = std(E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
-    std_strain_23(ii,1) = std(E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))/2,[],'all','omitnan')/sqrt(sum(track_A2B_prev{ii}>0));
+    std_strain_11(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
+    std_strain_22(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
+    std_strain_33(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
+    std_strain_12(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
+    std_strain_13(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
+    std_strain_23(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
+        .*E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
 end
 
 %u_total = inc2cum(u,dm,m,'linear');

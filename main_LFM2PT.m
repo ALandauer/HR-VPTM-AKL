@@ -25,8 +25,8 @@ import2ws();
 % fileNamePrefix = 'dz_*';
 
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['exp_shear_1sps_25s_003',filesep]; %subfolder for a specific experiment
-fileNamePrefix = '01sps_*';
+data_subfolder = ['PA_10sps_25str_007',filesep]; %subfolder for a specific experiment
+fileNamePrefix = '10sps_*';
 
 
 %% ======================= SET-UP SECTION ============================
@@ -199,13 +199,13 @@ BeadPara.color = 'white';         % By default
 
 %%%%% Trial-MPT Parameter %%%%%
 MPTPara.f_o_s = 700;              % Size of search field: max(|u|,|v|,|w|)
-MPTPara.edge_width = 30;          % Width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
+MPTPara.edge_width = 10;          % Width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
 MPTPara.n_neighborsMax = 16;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
 MPTPara.smoothness = 0.02;       % Coefficient of regularization
-MPTPara.outlrThres = 2;          % Threshold for removing outliers in MPT
-MPTPara.maxIterNum = 5;         % Max ADMM iteration number
+MPTPara.outlrThres = 6;          % Threshold for removing outliers in MPT
+MPTPara.maxIterNum = 3;         % Max ADMM iteration number
 MPTPara.iterStopThres = 1e-3;    % ADMM iteration stopping threshold
 
 MPTPara.usePrevResults = 0;      % Whether use previous results or not: 0-no; 1-yes;
@@ -223,7 +223,7 @@ maxGapTrajSeqLength = 1; % the max frame# gap between connected trajectory segme
 
 %%%% Postprocessing: gridding %%%%%
 %FOR EULERIAN POST-PROCESSING 
-grid_spacing = [35,35,25]; % grid spacing parameters
+grid_spacing = [30,30,20]; % grid spacing parameters
 
 
 %%%%% Run Trial-MPT tracking %%%%%
