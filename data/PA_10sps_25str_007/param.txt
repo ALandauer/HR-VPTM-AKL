@@ -1,5 +1,0 @@
-rect = [351.5100, 55.5100,653.9800,740.9800];
-
-depthRange = [-1150, 150];
-% axial slice step (in um)
-depthStep = 5;

@@ -7,24 +7,29 @@
 
 % set up vars
 smoothness = 0.05;%MPTPara.smoothness;
-% MPTPara.edge_width = 20;
+MPTPara.edge_width = 20;
 % grid_spacing = [35,35,20]; 
 
 
 %define data range, pad edges to accond for bead near edges moving outside
 %the range of the particles in the first image
-coords_cur = resultDisp{1}.parCoordA;
+coords_cur = resultDisp{1}.parCoordB;
 xList = MPTPara.xRange(1)-1.5*MPTPara.edge_width*MPTPara.axesScale(1):grid_spacing(1):MPTPara.xRange(2)+1.5*MPTPara.edge_width*MPTPara.axesScale(1);
 yList = MPTPara.yRange(1)-1.5*MPTPara.edge_width*MPTPara.axesScale(2):grid_spacing(2):MPTPara.yRange(2)+1.5*MPTPara.edge_width*MPTPara.axesScale(2);
 %z range is slightly different since it can be negative or both pos and neg
-zRange_grid(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3)))-2*grid_spacing(3));
-zRange_grid(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3)))+2*grid_spacing(3));
+% zRange_grid(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3)))-2*grid_spacing(3));
+% zRange_grid(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3)))+2*grid_spacing(3));
+zRange_grid(1) = min(coords_cur(:,3))-2*grid_spacing(3);
+zRange_grid(2) = max(coords_cur(:,3))+2*grid_spacing(3);
 zList = min(zRange_grid):grid_spacing(3):max(zRange_grid);
 [yGrid,xGrid,zGrid] = meshgrid(yList,xList,zList);
 
 %Set z range without padding
-MPTPara.zRange(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3))));
-MPTPara.zRange(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3))));
+% MPTPara.zRange(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3))));
+% MPTPara.zRange(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3))));
+
+MPTPara.zRange(1) = min(coords_cur(:,3));
+MPTPara.zRange(2) = max(coords_cur(:,3));
 
 disp('%%%%% Interpolating tracking results on ref grid %%%%%'); fprintf('\n');
 %interpolate scattered data onto eulerian grid
@@ -57,8 +62,8 @@ for ii = 1:length(resultDisp)
                     coords_cur_(:,2) > MPTPara.yRange(2)|...
                     coords_cur_(:,1) < MPTPara.xRange(1)|...
                     coords_cur_(:,2) < MPTPara.yRange(1)|...
-                    abs(coords_cur_(:,3)) < min(abs(MPTPara.zRange))|...
-                    abs(coords_cur_(:,3)) > max(abs(MPTPara.zRange))];
+                    coords_cur_(:,3) < min(MPTPara.zRange)|...
+                    coords_cur_(:,3) > max(MPTPara.zRange)];
     coords_cur_strain = coords_cur_(keep_coords,:);
                                          
     
@@ -270,7 +275,7 @@ shadedErrorBar(step_num,mean_strain_13,std_strain_13,'y-s',1)
 shadedErrorBar(step_num,mean_strain_23,std_strain_23,'k-^',1)
 xlabel('step num')
 ylabel('Strain')
-% axis([0,80,-.3,0.3])
+axis([0,80,-.3,0.35])
 
 title('Shear; std err shaded region')
 

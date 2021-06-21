@@ -25,8 +25,8 @@ import2ws();
 % fileNamePrefix = 'dz_*';
 
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['PA_10sps_25str_007',filesep]; %subfolder for a specific experiment
-fileNamePrefix = '10sps_*';
+data_subfolder = ['01sps_15percstrain_stiffPA_500fps_001',filesep,'recon',filesep]; %subfolder for a specific experiment
+fileNamePrefix = '01sps_*';
 
 
 %% ======================= SET-UP SECTION ============================
@@ -34,7 +34,7 @@ fileNamePrefix = '10sps_*';
 % ----------------------- oLaF parameters -----------------------
 
 %reconstruction depth range (im um)
-depthRange = [-1150, 150];
+depthRange = [-730, 370];
 % axial slice step (in um)
 depthStep = 5;
 
@@ -186,9 +186,9 @@ BeadPara.thres = 0.5;           % Threshold for detecting particles
 BeadPara.beadSize = 30;          % Estimated radius of a single particle
 BeadPara.minSize = 1000;           % Minimum num of voxels of a single particle
 BeadPara.maxSize = 10000;         % Maximum num of voxels of a single particle
-BeadPara.winSize = [50,50,50];     % By default
+BeadPara.winSize = [50,50,100];     % By default
 BeadPara.randNoise = 1e-7;      % By default
-BeadPara.numBeadsPSF = 2;
+BeadPara.numBeadsPSF = 1;
 BeadPara.fileFolder = fileFolder; %folder for raw images
 BeadPara.saveIntermediates = 1;   %1 = save and reuse intermediate raw images
 BeadPara.PSF = [];                % PSF function; Example: PSF = fspecial('disk', BeadPara.beadSize-1 ); % Disk blur
@@ -200,11 +200,11 @@ BeadPara.color = 'white';         % By default
 %%%%% Trial-MPT Parameter %%%%%
 MPTPara.f_o_s = 700;              % Size of search field: max(|u|,|v|,|w|)
 MPTPara.edge_width = 10;          % Width (in px) of image boarder within which to discard particles (due to poor tracking, and z-recon)
-MPTPara.n_neighborsMax = 16;     % Max # of neighboring particles
+MPTPara.n_neighborsMax = 12;     % Max # of neighboring particles
 MPTPara.n_neighborsMin = 1;      % Min # of neighboring particles
 MPTPara.gbSolver = 2;            % Global step solver: 1-moving least square fitting; 2-global regularization; 3-ADMM iterations
 MPTPara.smoothness = 0.02;       % Coefficient of regularization
-MPTPara.outlrThres = 6;          % Threshold for removing outliers in MPT
+MPTPara.outlrThres = 8;          % Threshold for removing outliers in MPT
 MPTPara.maxIterNum = 3;         % Max ADMM iteration number
 MPTPara.iterStopThres = 1e-3;    % ADMM iteration stopping threshold
 

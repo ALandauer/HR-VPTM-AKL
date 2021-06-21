@@ -113,7 +113,10 @@ elseif BeadPara.detectionMethod == 3
         beadParam_all{ImgSeqNum}.thres = beadParam_all{1}.thres;
     end
     
-    vol_in = double(Img{ImgSeqNum})/max(double(Img{ImgSeqNum}(:)));
+    norm_val = sort(double(Img{ImgSeqNum}(:)),'descend');
+    norm_val = norm_val(round(0.00005*numel(norm_val)));
+    vol_in = double(Img{ImgSeqNum})/norm_val;
+    vol_in(vol_in>1) = 1; 
     
     %run preprocessing to get PSF and deconvolve
     [vol_in,beadParam_all{ImgSeqNum}] = funPreprocLocalizeAC(vol_in,beadParam_all{ImgSeqNum},file_names,ImgSeqNum);

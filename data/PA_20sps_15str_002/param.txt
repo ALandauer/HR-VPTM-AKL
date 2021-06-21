@@ -1,0 +1,5 @@
+rect = [325.5100   25.5100  664.9800  742.9800]
+
+depthRange = [-800, 350];
+% axial slice step (in um)
+depthStep = 5;
