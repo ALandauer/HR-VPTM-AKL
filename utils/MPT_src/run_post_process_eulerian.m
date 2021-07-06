@@ -6,16 +6,17 @@
 %
 
 % set up vars
-smoothness = 0.05;%MPTPara.smoothness;
-MPTPara.edge_width = 20;
-% grid_spacing = [35,35,20]; 
+smoothness = MPTPara.smoothness;
+% smoothness = 0.01;
+% MPTPara.edge_width = 30;
+grid_spacing = [30,30,20]; 
 
 
 %define data range, pad edges to accond for bead near edges moving outside
 %the range of the particles in the first image
 coords_cur = resultDisp{1}.parCoordB;
-xList = MPTPara.xRange(1)-1.5*MPTPara.edge_width*MPTPara.axesScale(1):grid_spacing(1):MPTPara.xRange(2)+1.5*MPTPara.edge_width*MPTPara.axesScale(1);
-yList = MPTPara.yRange(1)-1.5*MPTPara.edge_width*MPTPara.axesScale(2):grid_spacing(2):MPTPara.yRange(2)+1.5*MPTPara.edge_width*MPTPara.axesScale(2);
+xList = MPTPara.xRange(1)-2*MPTPara.edge_width*MPTPara.axesScale(1):grid_spacing(1):MPTPara.xRange(2)+2*MPTPara.edge_width*MPTPara.axesScale(1);
+yList = MPTPara.yRange(1)-2*MPTPara.edge_width*MPTPara.axesScale(2):grid_spacing(2):MPTPara.yRange(2)+2*MPTPara.edge_width*MPTPara.axesScale(2);
 %z range is slightly different since it can be negative or both pos and neg
 % zRange_grid(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3)))-2*grid_spacing(3));
 % zRange_grid(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3)))+2*grid_spacing(3));
@@ -46,8 +47,8 @@ for ii = 1:length(resultDisp)
                    coords_cur_(:,2) > MPTPara.yRange(2)|...
                    coords_cur_(:,1) < MPTPara.xRange(1)|...
                    coords_cur_(:,2) < MPTPara.yRange(1)|...
-                   abs(coords_cur_(:,3)) < min(abs(MPTPara.zRange))|...
-                   abs(coords_cur_(:,3)) > max(abs(MPTPara.zRange))];
+                   coords_cur_(:,3) < min(MPTPara.zRange)|...
+                   coords_cur_(:,3) > max(MPTPara.zRange)];
     coords_cur_disp = coords_cur_(keep_coords,:);
     
     disp_cur = resultDisp{ii}.disp_A2B_parCoordB(keep_coords,:);
@@ -72,9 +73,9 @@ for ii = 1:length(resultDisp)
     F_cur_(:,1) = F_cur_vec(1:9:end);
     F_cur_(:,2) = F_cur_vec(5:9:end);
     F_cur_(:,3) = F_cur_vec(9:9:end);
-    F_cur_(:,4) = F_cur_vec(4:9:end)/2;
-    F_cur_(:,5) = F_cur_vec(7:9:end)/2;
-    F_cur_(:,6) = F_cur_vec(8:9:end)/2;
+    F_cur_(:,4) = F_cur_vec(4:9:end);
+    F_cur_(:,5) = F_cur_vec(7:9:end);
+    F_cur_(:,6) = F_cur_vec(8:9:end);
     F_cur = F_cur_(keep_coords,:);
     
     [~,~,~,H_inc{ii}{1,1}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,1),grid_spacing,smoothness,xGrid,yGrid,zGrid);
@@ -84,6 +85,10 @@ for ii = 1:length(resultDisp)
     [~,~,~,H_inc{ii}{1,3}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,5),grid_spacing,smoothness,xGrid,yGrid,zGrid);
     [~,~,~,H_inc{ii}{2,3}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,6),grid_spacing,smoothness,xGrid,yGrid,zGrid);
     H_inc{ii}{2,1} = H_inc{ii}{1,2}; H_inc{ii}{3,1} = H_inc{ii}{1,3}; H_inc{ii}{3,2} = H_inc{ii}{2,3};
+    
+    [~,~,~,nan_mask_F{ii}{1}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,1),grid_spacing,0,xGrid,yGrid,zGrid);
+    nan_mask_F{ii}{1} = ones(size(nan_mask_F{ii}{1}));%nan_mask_F{ii}{1}./nan_mask_F{ii}{1};
+    
 end
 
 %%
@@ -182,7 +187,7 @@ save(results_file_names_Eul,'resultDispInc','resultDefGradInc','u_total','F_tota
 disp('%%%%% Cumulated Eulerian reuslts saved %%%%%'); fprintf('\n');
 
 %% plotting options
-disp('%%%%% Optional plotting code - modify as needed %%%%%'); fprintf('\n');
+% % % disp('%%%%% Optional plotting code - modify as needed %%%%%'); fprintf('\n');
 % % % %%%%% Cone plot grid data: displecement %%%%%
 % % % frame_num = 5;
 % % % 
@@ -225,7 +230,7 @@ disp('%%%%% Optional plotting code - modify as needed %%%%%'); fprintf('\n');
 
 %%
 %plot mean strain comps
-bd_wd = 2;
+bd_wd = 4;
 clear mean_strain_* std_strain_*
 
 
@@ -233,49 +238,48 @@ for ii = 1:length(E_total)-1
 
     N = sum(track_A2B_prev{ii}>0);
     
-    mean_strain_11(ii,1) = mean(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_22(ii,1) = mean(nan_mask{ii}{2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_33(ii,1) = mean(nan_mask{ii}{3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_12(ii,1) = mean(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_13(ii,1) = mean(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
-    mean_strain_23(ii,1) = mean(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),'all','omitnan');
+    mean_strain_11(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
+    mean_strain_22(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
+    mean_strain_33(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
+    mean_strain_12(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
+    mean_strain_13(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
+    mean_strain_23(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
     
-    std_strain_11(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
-    std_strain_22(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
-    std_strain_33(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
-    std_strain_12(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
-    std_strain_13(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
-    std_strain_23(ii,1) = std(nan_mask{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2))...
-        .*E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/2):end-round(bd_wd/2)),[],'all','omitnan')/sqrt(N);
+    ste_strain_11(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
+    ste_strain_22(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
+    ste_strain_33(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
+    ste_strain_12(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
+    ste_strain_13(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
+    ste_strain_23(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
+        .*E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
 end
 
 %u_total = inc2cum(u,dm,m,'linear');
 
 
 %
-step_num = 1:length(mean_strain_11);
+step_num = 0.002*(0:length(mean_strain_11)-1);
 figure
-shadedErrorBar(step_num,mean_strain_11,std_strain_11,'b-x',1)
+shadedErrorBar(step_num,mean_strain_11,ste_strain_11,'b-x',1)
 hold on
-shadedErrorBar(step_num,mean_strain_22,std_strain_22,'g-*',1)
-shadedErrorBar(step_num,mean_strain_33,std_strain_33,'r-+',1)
-shadedErrorBar(step_num,mean_strain_12,std_strain_12,'m-o',1)
-shadedErrorBar(step_num,mean_strain_13,std_strain_13,'y-s',1)
-shadedErrorBar(step_num,mean_strain_23,std_strain_23,'k-^',1)
-xlabel('step num')
-ylabel('Strain')
-axis([0,80,-.3,0.35])
+shadedErrorBar(step_num,mean_strain_22,ste_strain_22,'g-*',1)
+shadedErrorBar(step_num,mean_strain_33,ste_strain_33,'r-+',1)
+shadedErrorBar(step_num,mean_strain_12,ste_strain_12,'m-o',1)
+shadedErrorBar(step_num,mean_strain_13,ste_strain_13,'y-s',1)
+shadedErrorBar(step_num,mean_strain_23,ste_strain_23,'k-^',1)
+xlabel('Time, s')
+ylabel('Lagrange strain')
+% axis([0.002*0,0.002*85,-.1,0.25])
 
 title('Shear; std err shaded region')
-

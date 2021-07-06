@@ -223,7 +223,7 @@ maxGapTrajSeqLength = 1; % the max frame# gap between connected trajectory segme
 
 %%%% Postprocessing: gridding %%%%%
 %FOR EULERIAN POST-PROCESSING 
-grid_spacing = [30,30,20]; % grid spacing parameters
+grid_spacing = [40,40,30]; % grid spacing parameters
 
 
 %%%%% Run Trial-MPT tracking %%%%%
