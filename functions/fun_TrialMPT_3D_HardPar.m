@@ -1,5 +1,5 @@
 function [parCoordB,uvw_B2A_refB,resultDisp,resultDefGrad,track_A2B,track_B2A,beadParam_all] = fun_TrialMPT_3D_HardPar(...
-    ImgSeqNum,ImgDef,BeadPara,beadParam_all,MPTPara,parCoordA,parCoordB_prev,uvw_B2A_refB_prev)
+    ImgSeqNum,ImgDef,file_names,BeadPara,beadParam_all,MPTPara,parCoordA,parCoordB_prev,uvw_B2A_refB_prev)
  
 
 warning('off');
@@ -55,7 +55,7 @@ elseif BeadPara.detectionMethod == 3
     BeadPara.deconvIter = 5;
     BeadPara.psfSize = [50,50]; %x,y size of bead-based psf
     BeadPara.winSize = [51, 51, 51];
-    BeadPara.ratThresh = 0.20;
+    BeadPara.ratThresh = 0.10;
     BeadPara.circThresh = 1.2;
     BeadPara.smoothFac = 0.15;
     beadParam_all{ImgSeqNum} = funSetUpBeadParams(BeadPara);
@@ -68,7 +68,7 @@ elseif BeadPara.detectionMethod == 3
     vol_in = double(currImg2)/max(double(currImg2(:)));
     
     %run preprocessing to get PSF and deconvolve
-    [vol_in,beadParam_all{ImgSeqNum}] = funPreprocLocalizeAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
+    [vol_in,beadParam_all{ImgSeqNum}] = funPreprocLocalizeAC(vol_in,beadParam_all{ImgSeqNum},file_names,ImgSeqNum);
     %find interger centriods
     [x_px{1}{ImgSeqNum},beadParam_all{ImgSeqNum}] = funLocateParticlesAC(vol_in,beadParam_all{ImgSeqNum},ImgSeqNum);
     %Use radial center-finding from TPT to get subpixel estimates based on the integer centroid locations

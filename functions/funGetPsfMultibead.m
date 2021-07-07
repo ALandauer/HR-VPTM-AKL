@@ -73,7 +73,11 @@ psf_mean = nanmean(psfs,4);
 
 %display the result
 h = figure;
-imagesc3d(psf_mean)
+try
+    imagesc3d(psf_mean)
+catch
+    imagesc3D(psf_mean)
+end
 drawnow
 
 %verify with user if it is okay

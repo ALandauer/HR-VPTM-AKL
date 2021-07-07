@@ -1,6 +1,6 @@
-function [ matches ] = f_track_nearest_neighbour3( part_A, part_B, f_o_s )
-%FUNCTION matches = f_track_nearest_neighbour3(part_A, part_B, f_o_s)
-% Objective: Nearest neigbhour tracking routine.
+function [ matches ] = f_track_nearest_neighbor3( part_A, part_B, f_o_s )
+%FUNCTION matches = f_track_nearest_neighbor3(part_A, part_B, f_o_s)
+% Objective: Nearest neigbhor tracking routine.
 % ---------------------------------------------------
 %
 %   INPUT:      part_A      - coordinates of particles in image A [n x 3]

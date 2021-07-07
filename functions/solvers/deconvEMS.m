@@ -29,6 +29,6 @@ for i = 1:iter
     end
     reconVolume(~isfinite(reconVolume)) = 0;
     ttime = toc;
-    fprintf(['\niter ' num2str(i) ' | ' num2str(iter) ', took ' num2str(ttime) ' secs']);
+    fprintf(['\niter ' num2str(i) ' | ' num2str(iter) ', took ' num2str(ttime) ' secs\n']);
 end
 

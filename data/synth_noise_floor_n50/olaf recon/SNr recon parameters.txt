@@ -1,2 +1,0 @@
-depthRange = [-450, 450]; % [um]
-depthStep = 5; %[um]
