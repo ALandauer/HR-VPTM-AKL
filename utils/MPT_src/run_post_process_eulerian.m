@@ -7,9 +7,7 @@
 
 % set up vars
 smoothness = MPTPara.smoothness;
-% smoothness = 0.01;
-% MPTPara.edge_width = 30;
-grid_spacing = [30,30,20]; 
+grid_spacing = MPTPara.spacing; 
 
 
 %define data range, pad edges to accond for bead near edges moving outside
@@ -17,18 +15,12 @@ grid_spacing = [30,30,20];
 coords_cur = resultDisp{1}.parCoordB;
 xList = MPTPara.xRange(1)-2*MPTPara.edge_width*MPTPara.axesScale(1):grid_spacing(1):MPTPara.xRange(2)+2*MPTPara.edge_width*MPTPara.axesScale(1);
 yList = MPTPara.yRange(1)-2*MPTPara.edge_width*MPTPara.axesScale(2):grid_spacing(2):MPTPara.yRange(2)+2*MPTPara.edge_width*MPTPara.axesScale(2);
-%z range is slightly different since it can be negative or both pos and neg
-% zRange_grid(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3)))-2*grid_spacing(3));
-% zRange_grid(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3)))+2*grid_spacing(3));
 zRange_grid(1) = min(coords_cur(:,3))-2*grid_spacing(3);
 zRange_grid(2) = max(coords_cur(:,3))+2*grid_spacing(3);
 zList = min(zRange_grid):grid_spacing(3):max(zRange_grid);
 [yGrid,xGrid,zGrid] = meshgrid(yList,xList,zList);
 
 %Set z range without padding
-% MPTPara.zRange(1) = sign(min(coords_cur(:,3)))*(min(abs(coords_cur(:,3))));
-% MPTPara.zRange(2) = sign(max(coords_cur(:,3)))*(max(abs(coords_cur(:,3))));
-
 MPTPara.zRange(1) = min(coords_cur(:,3));
 MPTPara.zRange(2) = max(coords_cur(:,3));
 
@@ -87,7 +79,7 @@ for ii = 1:length(resultDisp)
     H_inc{ii}{2,1} = H_inc{ii}{1,2}; H_inc{ii}{3,1} = H_inc{ii}{1,3}; H_inc{ii}{3,2} = H_inc{ii}{2,3};
     
     [~,~,~,nan_mask_F{ii}{1}] = funScatter2Grid3D(coords_cur_strain(:,1),coords_cur_strain(:,2),coords_cur_strain(:,3),F_cur(:,1),grid_spacing,0,xGrid,yGrid,zGrid);
-    nan_mask_F{ii}{1} = ones(size(nan_mask_F{ii}{1}));%nan_mask_F{ii}{1}./nan_mask_F{ii}{1};
+    nan_mask_F{ii}{1} = ones(size(nan_mask_F{ii}{1}))*nan_mask_F{ii}{1}./nan_mask_F{ii}{1};
     
 end
 
@@ -186,100 +178,181 @@ save(results_file_names_Eul,'resultDispInc','resultDefGradInc','u_total','F_tota
 
 disp('%%%%% Cumulated Eulerian reuslts saved %%%%%'); fprintf('\n');
 
-%% plotting options
-% % % disp('%%%%% Optional plotting code - modify as needed %%%%%'); fprintf('\n');
-% % % %%%%% Cone plot grid data: displecement %%%%%
-% % % frame_num = 5;
-% % % 
-% % % figure, plotCone3(x_grid_ref,y_grid_ref,z_grid_ref,u_total{frame_num}{1},u_total{frame_num}{2},u_total{frame_num}{3});
-% % % set(gca,'fontsize',18); view(3); box on; axis equal; axis tight;
-% % % title('Tracked cumulative displacement','fontweight','normal');
-% % % axis([MPTPara.xRange(1), MPTPara.xRange(2), ...
-% % %     MPTPara.yRange(1), MPTPara.yRange(2), ...
-% % %     MPTPara.depthRange(1), MPTPara.depthRange(2)]);
-% % % 
-% % % % uvw_Grid_ref_vector
-% % % uvw_Grid_ref_vector=[u_total{frame_num}{1}(:),u_total{frame_num}{2}(:),u_total{frame_num}{3}(:)]'; 
-% % % uvw_Grid_ref_vector=uvw_Grid_ref_vector(:);
-% % % 
-% % % % F_vector = [F11_pt1,F21_pt1,F31_pt1,F12_pt1,F22_pt1,F32_pt1,F13_pt1,F23_pt1,F33_pt1, ...
-% % % %                   F11_pt2,F21_pt2,F31_pt2,F12_pt2,F22_pt2,F32_pt2,F13_pt2,F23_pt2,F33_pt2, ...
-% % % %                   ... Other points ... ]'
-% % % n_pts = numel(F_total{1}{1});
-% % % F_grid_ref_vector = zeros(9*n_pts,1);
-% % % F_grid_ref_vector(1:9:end) = F_total{frame_num}{1,1}(:);
-% % % F_grid_ref_vector(2:9:end) = F_total{frame_num}{2,1}(:);
-% % % F_grid_ref_vector(3:9:end) = F_total{frame_num}{3,1}(:);
-% % % F_grid_ref_vector(4:9:end) = F_total{frame_num}{1,2}(:);
-% % % F_grid_ref_vector(5:9:end) = F_total{frame_num}{2,2}(:);
-% % % F_grid_ref_vector(6:9:end) = F_total{frame_num}{3,2}(:);
-% % % F_grid_ref_vector(7:9:end) = F_total{frame_num}{1,3}(:);
-% % % F_grid_ref_vector(8:9:end) = F_total{frame_num}{2,3}(:);
-% % % F_grid_ref_vector(9:9:end) = F_total{frame_num}{3,3}(:);
-% % % 
-% % % %%%%% Generate an FE-mesh %%%%%
-% % % [coordinatesFEM_ref,elementsFEM_ref] = funMeshSetUp3(x_grid_ref,y_grid_ref,z_grid_ref);
-% % % 
-% % % %%%%% Cone plot grid data: displacement %%%%%
-% % % % Plotdisp_show3(uvw_Grid_ref_vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor');
-% % % % 
-% % % % %%%%% Cone plot grid data: infinitesimal strain %%%%%
-% % % % Plotstrain_show3(F_grid_ref_vector, coordinatesFEM_refB, elementsFEM_refB,[],'NoEdgeColor',1,tstep);
+%%%%%% plotting options %%%%%%%
+%slice views:
 
+%% disp plots
+clear H
+cmr_colors = cmrMap(256);
+frame_num = 10;
 
-
-%%
-%plot mean strain comps
+%adjust bd_wd and multipers to crop out edge effects
 bd_wd = 4;
-clear mean_strain_* std_strain_*
+disp_vol_x = nan_mask{frame_num}{1}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1)).*u_total{frame_num}{1}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+disp_vol_y = nan_mask{frame_num}{2}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1)).*u_total{frame_num}{2}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+disp_vol_z = nan_mask{frame_num}{3}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1)).*u_total{frame_num}{3}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+
+yGrid_crop = yGrid(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+xGrid_crop = xGrid(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+zGrid_crop = zGrid(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
 
 
-for ii = 1:length(E_total)-1
-
-    N = sum(track_A2B_prev{ii}>0);
-    
-    mean_strain_11(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
-    mean_strain_22(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
-    mean_strain_33(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
-    mean_strain_12(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
-    mean_strain_13(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
-    mean_strain_23(ii,1) = mean(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),'all','omitnan');
-    
-    ste_strain_11(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{1,1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
-    ste_strain_22(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{2,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
-    ste_strain_33(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{3,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
-    ste_strain_12(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{1,2}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
-    ste_strain_13(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{1,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
-    ste_strain_23(ii,1) = std(nan_mask_F{ii}{1}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1))...
-        .*E_total{ii}{2,3}(bd_wd:end-bd_wd,bd_wd:end-bd_wd,round(bd_wd/1):end-round(bd_wd/1)),[],'all','omitnan')/sqrt(N);
-end
-
-%u_total = inc2cum(u,dm,m,'linear');
-
-
-%
-step_num = 0.002*(0:length(mean_strain_11)-1);
 figure
-shadedErrorBar(step_num,mean_strain_11,ste_strain_11,'b-x',1)
-hold on
-shadedErrorBar(step_num,mean_strain_22,ste_strain_22,'g-*',1)
-shadedErrorBar(step_num,mean_strain_33,ste_strain_33,'r-+',1)
-shadedErrorBar(step_num,mean_strain_12,ste_strain_12,'m-o',1)
-shadedErrorBar(step_num,mean_strain_13,ste_strain_13,'y-s',1)
-shadedErrorBar(step_num,mean_strain_23,ste_strain_23,'k-^',1)
-xlabel('Time, s')
-ylabel('Lagrange strain')
-% axis([0.002*0,0.002*85,-.1,0.25])
+subplot(1,3,1)
+H = slice(yGrid_crop,xGrid_crop,zGrid_crop,disp_vol_x,xs,ys,zs);
+colormap(cmr_colors)
+axis image
+% caxis([-0.15,0.15])
 
-title('Shear; std err shaded region')
+H(1).EdgeColor = 'none';
+H(2).EdgeColor = 'none';
+H(3).EdgeColor = 'none';
+xlabel('y (\mum)')
+ylabel('x (\mum)')
+zlabel('z (\mum)')
+title('x-displacement')
+colorbar
+
+subplot(1,3,2)
+H = slice(yGrid_crop,xGrid_crop,zGrid_crop,disp_vol_y,xs,ys,zs);
+colormap(cmr_colors)
+axis image
+% caxis([-0.15,0.15])
+
+H(1).EdgeColor = 'none';
+H(2).EdgeColor = 'none';
+H(3).EdgeColor = 'none';
+xlabel('y (\mum)')
+ylabel('x (\mum)')
+zlabel('z (\mum)')
+title('y-displacement')
+colorbar
+
+subplot(1,3,3)
+H = slice(yGrid_crop,xGrid_crop,zGrid_crop,disp_vol_z,xs,ys,zs);
+colormap(cmr_colors)
+axis image
+% caxis([-150,10])
+
+H(1).EdgeColor = 'none';
+H(2).EdgeColor = 'none';
+H(3).EdgeColor = 'none';
+xlabel('y (\mum)')
+ylabel('x (\mum)')
+zlabel('z (\mum)')
+title('z-displacement')
+colorbar
+
+%% strain plots
+clear H
+cmr_colors = cmrMap(256);
+frame_num = 10;
+
+bd_wd = 4;
+e_vol_xx = nan_mask_F{frame_num}{1}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1)).*E_total{frame_num}{1,1}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+e_vol_yy = nan_mask_F{frame_num}{1}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1)).*E_total{frame_num}{2,2}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+e_vol_zz = nan_mask_F{frame_num}{1}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1)).*E_total{frame_num}{3,3}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+e_vol_xy = nan_mask_F{frame_num}{1}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1)).*E_total{frame_num}{1,2}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+e_vol_xz = nan_mask_F{frame_num}{1}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1)).*E_total{frame_num}{1,3}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+e_vol_yz = nan_mask_F{frame_num}{1}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1)).*E_total{frame_num}{2,3}(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+
+yGrid_crop = yGrid(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+xGrid_crop = xGrid(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+zGrid_crop = zGrid(1*bd_wd:end-1*bd_wd,bd_wd:end-1*bd_wd,round(bd_wd*1):end-round(bd_wd*1));
+
+xs = 700;
+ys = 700;
+zs = -300;
+
+figure
+subplot(2,3,1)
+H = slice(yGrid_crop,xGrid_crop,zGrid_crop,e_vol_xx,xs,ys,zs);
+colormap(cmr_colors)
+axis image
+% caxis([-0.15,0.15])
+
+H(1).EdgeColor = 'none';
+H(2).EdgeColor = 'none';
+H(3).EdgeColor = 'none';
+xlabel('y (\mum)')
+ylabel('x (\mum)')
+zlabel('z (\mum)')
+title('E_{xx}')
+colorbar
+
+subplot(2,3,2)
+H = slice(yGrid_crop,xGrid_crop,zGrid_crop,e_vol_yy,xs,ys,zs);
+colormap(cmr_colors)
+axis image
+% caxis([-0.15,0.15])
+
+H(1).EdgeColor = 'none';
+H(2).EdgeColor = 'none';
+H(3).EdgeColor = 'none';
+xlabel('y (\mum)')
+ylabel('x (\mum)')
+zlabel('z (\mum)')
+title('E_{yy}')
+colorbar
+
+subplot(2,3,3)
+H = slice(yGrid_crop,xGrid_crop,zGrid_crop,e_vol_zz,xs,ys,zs);
+colormap(cmr_colors)
+axis image
+% caxis([-0.15,0.30])
+
+H(1).EdgeColor = 'none';
+H(2).EdgeColor = 'none';
+H(3).EdgeColor = 'none';
+xlabel('y (\mum)')
+ylabel('x (\mum)')
+zlabel('z (\mum)')
+title('E_{zz}')
+colorbar
+
+subplot(2,3,4)
+H = slice(yGrid_crop,xGrid_crop,zGrid_crop,e_vol_xy,xs,ys,zs);
+colormap(cmr_colors)
+axis image
+% caxis([-0.10,0.10])
+
+H(1).EdgeColor = 'none';
+H(2).EdgeColor = 'none';
+H(3).EdgeColor = 'none';
+xlabel('y (\mum)')
+ylabel('x (\mum)')
+zlabel('z (\mum)')
+title('E_{xy}')
+colorbar
+
+
+subplot(2,3,5)
+H = slice(yGrid_crop,xGrid_crop,zGrid_crop,e_vol_xz,xs,ys,zs);
+colormap(cmr_colors)
+axis image
+% caxis([0.25,0.35])
+
+H(1).EdgeColor = 'none';
+H(2).EdgeColor = 'none';
+H(3).EdgeColor = 'none';
+xlabel('y (\mum)')
+ylabel('x (\mum)')
+zlabel('z (\mum)')
+title('E_{zx}')
+colorbar
+
+subplot(2,3,6)
+H = slice(yGrid_crop,xGrid_crop,zGrid_crop,e_vol_yz,xs,ys,zs);
+colormap(cmr_colors)
+axis image
+% caxis([-0.10,0.10])
+
+H(1).EdgeColor = 'none';
+H(2).EdgeColor = 'none';
+H(3).EdgeColor = 'none';
+xlabel('y (\mum)')
+ylabel('x (\mum)')
+zlabel('z (\mum)')
+title('E_{zy}')
+colorbar
+

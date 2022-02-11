@@ -25,8 +25,8 @@ import2ws();
 % fileNamePrefix = 'dz_*';
 
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['01sps_15percstrain_stiffPA_500fps_001',filesep,'recon',filesep]; %subfolder for a specific experiment
-fileNamePrefix = '01sps_*';
+data_subfolder = ['example_data',filesep]; %subfolder for a specific experiment
+fileNamePrefix = 'example_*';
 
 
 %% ======================= SET-UP SECTION ============================
@@ -50,9 +50,8 @@ superResFactor = 'default'; % default means sensor resolution
 MPTPara.DIM = 3;
 MPTPara.axesScale = [1.64,1.64,depthStep]; % unit: um/px
 MPTPara.depthRange = depthRange; % unit: um/px
-MPTPara.tstep = 1; % unit: us
 
-MPTPara.mode = 'inc'; % {'inc': incremental mode; 'cum': cumulative mode}
+MPTPara.mode = 'inc'; % {'inc': incremental mode}
 
 % Bead detection method
 BeadPara.detectionMethod = 3; % {1-TPT code; 2-regionprops; 3-LFM}
@@ -126,27 +125,27 @@ for ii = 1:length(LensletImageSeq)
     reconVolume = deconvEMS(forwardFUN, backwardFUN, LFimage, it, initVolume, 1, lanczos2FFT, onesForward, onesBack);
     
     % Display the first reconstruction
-% %     if ii == 1
-% %         figure;
-% %         if(size(reconVolume, 3) > 1)
-% %             imshow3D(reconVolume, [], 'inferno');
-% %         else
-% %             imagesc3D(reconVolume); colormap inferno
-% %         end
-% %         
-% %         
-% %         %verify with user if the recon is okay
-% %         prompt = '\nContinue deconvolving the remainder of the sequence? Y/N [Y]: ';
-% %         yn = input(prompt,'s');
-% %         if isempty(yn)
-% %             yn = 'Y';
-% %         end
-% %         if strcmpi(yn,'y')
-% %             disp('Onward!')
-% %         else
-% %             error('Deconv not accepted...')
-% %         end
-% %     end
+    if ii == 1
+        figure;
+        if(size(reconVolume, 3) > 1)
+            imshow3D(reconVolume, [], 'inferno');
+        else
+            imagesc3D(reconVolume); colormap inferno
+        end
+        
+        
+        %verify with user if the recon is okay
+        prompt = '\nContinue deconvolving the remainder of the sequence? Y/N [Y]: ';
+        yn = input(prompt,'s');
+        if isempty(yn)
+            yn = 'Y';
+        end
+        if strcmpi(yn,'y')
+            disp('Onward!')
+        else
+            error('Deconv not accepted...')
+        end
+    end
     
     filename_cur = [imageNames{ii}(1:end-4),'.mat'];
     
@@ -215,6 +214,7 @@ MPTPara.post_proc_type = 'eulerian'; %Whether to use a Lagrangian trajectory rou
 %FOR LAGRANGIAN POST-PROCESSING 
 MPTPara.strain_f_o_s = 500;       % Size of virtual strain gauge
 MPTPara.strain_n_neighbors = 16; % # of neighboring particles used in strain gauge
+MPTPara.tstep = 1; % unit: us
 distThres = 55; % distance threshold to connect split trajectory segments
 extrapMethod = 'pchip';  % extrapolation scheme to connect split trajectory segments
                          % suggestion: 'nearest' for Brownian motion
@@ -223,7 +223,7 @@ maxGapTrajSeqLength = 1; % the max frame# gap between connected trajectory segme
 
 %%%% Postprocessing: gridding %%%%%
 %FOR EULERIAN POST-PROCESSING 
-grid_spacing = [40,40,30]; % grid spacing parameters
+MPTPara.spacing = [30,30,20]; % grid spacing parameters
 
 
 %%%%% Run Trial-MPT tracking %%%%%
