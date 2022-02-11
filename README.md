@@ -36,7 +36,7 @@ In addition to several scripts and packages included in the "utils" subfolder.
 
 Images follow the basic guidelines from the oLaF software. In short: the optical configuration should be specified in a LFMconfig.yaml file, a `whiteImage.tif` image of a uniformly illuminated microlens array, and a sequence of one or more images to reconstruct.
 
-* Good alignemnt of optics is critical for reconstruction quality. We have found LFDisplay and the WhiteImage to be handy for evaluating algnment.
+* Good alignemnt of optics is critical for reconstruction quality. We have found LFDisplay (http://graphics.stanford.edu/software/LFDisplay/) and the WhiteImage to be handy for evaluating algnment.
 * Particle size is important - we aim for a particle diameter of 5 to 10 px.
 * Particle seeding density should be a compromise between particle overlap and loss of spatial resolution due to gaps between fiducuals. Fewer than around 10 particles in the field of view tend to lead to tracking errors and the code may not run. Overlapping particles tends to lead to reconstruction artifacts, increased uncertainty in centroid finding, and ghost particles.
 * Background light in the image should be eliminated as much as possible, to avoid reconstruction artifacts.
