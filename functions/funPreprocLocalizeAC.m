@@ -126,7 +126,7 @@ if ImgSeqNum == 1
     histogram(vol(vol~=0))
     drawnow
     f2 = figure;
-    imagesc3d(vol),colorbar
+    imagesc3D(vol),colorbar
     drawnow
     
     BeadPara.thres = input('Enter binarization threshold estimate: ');
