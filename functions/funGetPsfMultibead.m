@@ -74,7 +74,7 @@ psf_mean = nanmean(psfs,4);
 %display the result
 h = figure;
 try
-    imagesc3d(psf_mean)
+    imagesc3D(psf_mean)
 catch
     imagesc3D(psf_mean)
 end
