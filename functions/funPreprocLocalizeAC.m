@@ -138,7 +138,7 @@ if ImgSeqNum == 1
     YN = 0;
     while YN == 0
         f3 = figure;
-        imagesc3d(vol>BeadPara.thres),colorbar
+        imagesc3D(vol>BeadPara.thres),colorbar
         drawnow
         
         YN_ = input('Binarization okay? (Y/N) [N]: ','s');
@@ -150,7 +150,7 @@ if ImgSeqNum == 1
             histogram(vol(vol~=0))
             drawnow
             f2 = figure;
-            imagesc3d(vol),colorbar
+            imagesc3D(vol),colorbar
             drawnow
             BeadPara.thres = input('Enter binarization threshold estimate from histogram: ');
         end
