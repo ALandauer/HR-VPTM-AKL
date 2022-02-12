@@ -1,2 +1,0 @@
-depthRange = [-500, 500];
-depthStep = 5; 
