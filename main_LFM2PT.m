@@ -20,12 +20,9 @@ import2ws();
 
 
 %% Specify data to import
-% data_folder = ['.',filesep,'data',filesep]; %main data directory
-% data_subfolder = ['dz_002_20210415',filesep]; %subfolder for a specific experiment
-% fileNamePrefix = 'dz_*';
 
 data_folder = ['.',filesep,'data',filesep]; %main data directory
-data_subfolder = ['example_data',filesep]; %subfolder for a specific experiment
+data_subfolder = ['test_image',filesep]; %subfolder for a specific experiment
 fileNamePrefix = 'example_*';
 
 
