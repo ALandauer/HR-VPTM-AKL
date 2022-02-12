@@ -1,4 +1,4 @@
-%main run script to run LFM2PT: coolect data, configure and run reconstruction, run Trial-MPT, and save output.
+%main run script to run LFM2PT: collect image data, configure and run reconstruction, run particle tracking, and save output.
 
 
 % This project is based on two underlaying packages: oLaF for
@@ -10,7 +10,7 @@
 %
 %       and
 %
-%       [Jin's Trial-MPT paper]
+%       [Jin's ALT-SCRIPT paper]
 %
 
 clear, close all
@@ -153,14 +153,14 @@ for ii = 1:length(LensletImageSeq)
 end
 
 
-%%  =================== TRIAL-MPT SECTION ============================
+%%  =================== PARTICLE TRACKING SECTION ============================
 
 %summarize setup
 disp('*************************************************************');
-disp('Starting Trial-MPT...');
+disp('Starting particle tracking...');
 disp(['Tracking mode: ',MPTPara.mode]);
 disp('*************************************************************'); fprintf('\n');
-
+% this version of ALT-SCRIPT is called Trial-MPT
 
 % get the data folder and name from the recon save
 cur_dir = dir();
