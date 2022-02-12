@@ -1,0 +1,5 @@
+Included are an example LFMconfig.yaml and WhiteImage.tif from the synthetic test cases. 
+
+To test an example image, copy the respective config and lenset array image (named WhiteImage.tif) 
+into a test folder directory along side the image(s) to reconstruct, then update the data directory lines
+in the main function.
