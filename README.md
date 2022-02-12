@@ -8,7 +8,7 @@ This repository contains the MATLAB m-files for LFM2PT along with synthetic exam
 ## Running LFM2PT
 
 ### Software Required
-Development and test occurred in Matlab versions 2019a - 2021a and older versions may work but have not been tested.
+Development and test occurred in Matlab versions 2019a - 2021a. Older versions may work but have not been tested.
 
 The following Toolboxes are required: 
 * 'System Identification Toolbox'
