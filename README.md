@@ -1,9 +1,9 @@
 # LFM2PT: Light field microscopy multi-particle tracking from high-speed video
 
-LFM2PT is a script bundle that feeds light field microscopy (LFM) data to (2) volumetric particle tracking (PT) to reconstruct 3D volumtric displacements and strains from LFM images of fluorescent microparticles.  
+LFM2PT is a script bundle that feeds light field microscopy (LFM) data to (2) volumetric particle tracking (PT) to reconstruct 3D volumetric displacements and strains from LFM images of fluorescent microparticles.  
 
 ## Purpose
-This repository contains the MATLAB m-files for LFM2PT along with synthetic example images. The algorithm relies on two primary precursor code: oLaF (https://gitlab.lrz.de/IP/olaf) and ALT-SCRIPT (early develoment fork from https://github.com/FranckLab/ALT-SCRIPT).
+This repository contains the MATLAB m-files for LFM2PT along with synthetic example images. The algorithm relies on two primary precursor code: oLaF (https://gitlab.lrz.de/IP/olaf) and ALT-SCRIPT (early development fork from https://github.com/FranckLab/ALT-SCRIPT).
 
 ## Running LFM2PT
 
@@ -32,16 +32,16 @@ Other external tools that may be helpful include:
 In addition to several scripts and packages included in the "utils" subfolder.
 
 
-### Input image requirments (data)
+### Input image requirements (data)
 
 Images follow the basic guidelines from the oLaF software. In short: the optical configuration should be specified in a LFMconfig.yaml file, a `whiteImage.tif` image of a uniformly illuminated microlens array, and a sequence of one or more images to reconstruct.
 
-* Good alignemnt of optics is critical for reconstruction quality. We have found LFDisplay (http://graphics.stanford.edu/software/LFDisplay/) and the WhiteImage to be handy for evaluating algnment.
+* Good alignemnt of optics is critical for reconstruction quality. We have found LFDisplay (http://graphics.stanford.edu/software/LFDisplay/) and the WhiteImage to be handy for evaluating alignment.
 * Particle size is important - we aim for a particle diameter of 5 to 10 px.
-* Particle seeding density should be a compromise between particle overlap and loss of spatial resolution due to gaps between fiducuals. Fewer than around 10 particles in the field of view tend to lead to tracking errors and the code may not run. Overlapping particles tends to lead to reconstruction artifacts, increased uncertainty in centroid finding, and ghost particles.
+* Particle seeding density should be a compromise between particle overlap and loss of spatial resolution due to gaps between fiducials. Fewer than around 10 particles in the field of view tend to lead to tracking errors and the code may not run. Overlapping particles tends to lead to reconstruction artifacts, increased uncertainty in centroid finding, and ghost particles.
 * Background light in the image should be eliminated as much as possible, to avoid reconstruction artifacts.
  
-*Health warning* Reconstruction can take a *long* time (particularly for large image sequeae, of course) - be careful in choosing settings, and make sure to check a single reconstruction before running every image in a video.
+*Health warning* Reconstruction can take a *long* time (particularly for large image sequences, of course) - be careful in choosing settings, and make sure to check a single reconstruction before running every image in a video.  
 
 
 ### Running including example case
@@ -49,6 +49,7 @@ Images follow the basic guidelines from the oLaF software. In short: the optical
 2. Copy the desired test images `test_images` directory as needed.
 3. Run the `main_LFM2PT.m` script and follow prompts. 
 
+*Health warning* Each reconstructed volume image is saved into the data directory alongside the .tifs in .mat containers. This can become a inconvenient amount of data to store and transfer - for the synthetic test cases each image is 1.3 GB, and the sequence for the shear experiment data totals about 81 GB.
 
 ## Cite
 If used please cite:
