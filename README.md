@@ -3,7 +3,7 @@
 LFM2PT is a script bundle that feeds light field microscopy (LFM) data to (2) volumetric particle tracking (PT) for reconstructing 3D volumetric displacements and strains from LFM images of fluorescent microparticles.  
 
 ## Purpose
-This repository contains the MATLAB m-files for LFM2PT along with synthetic example images. The algorithm relies on two primary precursor code: oLaF (https://gitlab.lrz.de/IP/olaf) and ALT-SCRIPT (early development fork from https://github.com/FranckLab/ALT-SCRIPT).
+This repository contains the MATLAB m-files for LFM2PT along with synthetic example images. The algorithm relies on two primary precursor code: oLaF (https://gitlab.lrz.de/IP/olaf) and SerialTrack (early development fork from https://github.com/FranckLab/ALT-SCRIPT, which in turn uses modified part2track https://github.com/Part2Track/Part2Track subfunctions).
 
 ## Running LFM2PT
 
