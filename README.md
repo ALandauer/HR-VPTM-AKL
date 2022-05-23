@@ -1,7 +1,7 @@
 # LFM2PT: Light field microscopy multi-particle tracking from high-speed video
 
 ## Purpose
-This repository contains the MATLAB m-files for LFM2PT along with synthetic example images. The algorithm relies on two primary precursor code: oLaF (https://gitlab.lrz.de/IP/olaf) and SerialTrack ([link](https://github.com/FranckLab/SerialTrack)). For the official release version of the code (now called HR-VPTM) see: https://github.com/FranckLab/HR-VPTM
+This repository contains the MATLAB m-files for LFM2PT along with synthetic example images. The algorithm relies on two primary precursor code: oLaF (https://gitlab.lrz.de/IP/olaf) and SerialTrack ([link](https://github.com/FranckLab/SerialTrack)). For the official release version of the code (now called HR-VPTM) see: [HR-VPTM on the FranckLab GitHub](https://github.com/FranckLab/HR-VPTM)
 
 ## Running LFM2PT
 
@@ -54,4 +54,4 @@ If used please cite:
 
 
 ## Contact and support
-For questions, please first refer to [the "offical" version](https://github.com/FranckLab/SerialTrack). Add a new question if similar issue hasn't been reported as a GitHub "Issue". The authors' contact information can be found via GitHub or via the associated paper (in press).
+For questions, please first refer to [the "offical" version](https://github.com/FranckLab/HR-VPTM). Add a new question if similar issue hasn't been reported as a GitHub "Issue". The authors' contact information can be found via GitHub or via the associated paper (in press).
