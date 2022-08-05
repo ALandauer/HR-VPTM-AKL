@@ -1,11 +1,13 @@
 # NOTE: This is a development version of the [HR-VPTM code released by the Franck Lab](https://github.com/FranckLab/HR-VPTM)
 
-## LFM2PT: Light field microscopy multi-particle tracking from high-speed video
+## HR-VPTM (High-Rate Volumetric Particle Tracking Microscopy): Light field microscopy-based multi-particle tracking from high-speed video
+
+HR-VPTM is a script bundle that feeds light field microscopy (LFM) data to volumetric particle tracking (PT) for reconstructing 3D volumetric displacements and strains from LFM images of fluorescent microparticles.  
 
 ## Purpose
-This repository contains the MATLAB m-files for LFM2PT along with synthetic example images. The algorithm relies on two primary precursor code: oLaF (https://gitlab.lrz.de/IP/olaf) and SerialTrack ([link](https://github.com/FranckLab/SerialTrack)). For the official release version of the code (now called HR-VPTM) see: [HR-VPTM on the FranckLab GitHub](https://github.com/FranckLab/HR-VPTM)
+This repository contains the MATLAB m-files for HR-VPTM along with synthetic example images. The algorithm relies on two primary precursor code: oLaF (https://gitlab.lrz.de/IP/olaf) and SerialTrack (early development fork from https://github.com/FranckLab/SerialTrack, which in turn uses modified part2track https://github.com/Part2Track/Part2Track and TPT https://github.com/FranckLab/T-PT subfunctions).
 
-## Running LFM2PT
+## Running HR-VPTM
 
 Development and test occurred in Matlab versions 2019a - 2021a on Windows 10. Other versions may work but have not been tested.
 
